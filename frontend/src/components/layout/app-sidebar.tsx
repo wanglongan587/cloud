@@ -69,7 +69,7 @@ export function AppSidebar({ slug }: { slug: string }) {
   const { session, signOut, signOutOfGitHub } = useSession()
   const { data: providers = [] } = useLoginProviders()
   const user = session.status === 'signed-in' ? session.user : undefined
-  const { spaces = [], space, tenantId } = useCurrentSpace()
+  const { spaces = [], space } = useCurrentSpace()
   const { data: inboxItems = [] } = useInboxItems(slug)
   const unreadCount = inboxItems.filter((i) => !i.read).length
   const [createSpaceOpen, setCreateSpaceOpen] = useState(false)
@@ -82,7 +82,6 @@ export function AppSidebar({ slug }: { slug: string }) {
       <CreateSpaceDialog
         open={createSpaceOpen}
         onOpenChange={setCreateSpaceOpen}
-        tenantId={tenantId}
         onCreated={(newSlug) => void navigate(workspacePaths(newSlug).issues)}
       />
       <SidebarHeader className="py-3">

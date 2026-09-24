@@ -74,8 +74,19 @@ func run() (runErr error) {
 	if e != nil {
 		return e
 	}
+	var directory router.Directory
+	if cfg.Directory.Endpoint != "" {
+		key, readErr := os.ReadFile(cfg.Directory.AppKeyFile)
+		if readErr != nil {
+			return fmt.Errorf("read directory app key: %w", readErr)
+		}
+		directory, e = router.NewTianzhouClient(cfg.Directory.Endpoint, cfg.Directory.HWID, cfg.Directory.Environment, string(key), nil)
+		if e != nil {
+			return e
+		}
+	}
 	gin.SetMode(cfg.Server.Mode)
-	server := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Server.Port), Handler: router.New(store, auth, log), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: cfg.Server.ReadTimeout, WriteTimeout: cfg.Server.WriteTimeout, IdleTimeout: 60 * time.Second}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", cfg.Server.Port), Handler: router.New(store, auth, log, directory), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: cfg.Server.ReadTimeout, WriteTimeout: cfg.Server.WriteTimeout, IdleTimeout: 60 * time.Second}
 	failed := make(chan error, 1)
 	go func() {
 		log.Info("Cloud listening", zap.String("address", server.Addr))

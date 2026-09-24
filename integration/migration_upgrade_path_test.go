@@ -76,8 +76,7 @@ func columnNullable(t *testing.T, pool *sql.DB, table, column string) bool {
 
 // TestMigrationUpstream0007UpgradePath is the most important upgrade path: a database that ran the
 // real upstream 0001-0007 (including 0007's project->default-space binding and NOT NULL space_id)
-// must upgrade cleanly to the new sequence without re-running any upstream migration, without
-// checksum errors, keeping 0007's data bindings while finally allowing unscoped projects.
+// must upgrade cleanly without re-running upstream migrations or losing project bindings.
 func TestMigrationUpstream0007UpgradePath(t *testing.T) {
 	pool, _ := testSchema(t, "test_upg_")
 	// The current 0001-0007 files are byte-identical to upstream/main (asserted separately by the
@@ -101,7 +100,7 @@ func TestMigrationUpstream0007UpgradePath(t *testing.T) {
 		{"INSERT INTO users(id,display_name,status) VALUES($1,'Upgrade user','active')", []any{ids[0]}},
 		{"INSERT INTO tenants(id,name,status) VALUES($1,'Upgrade tenant','active')", []any{ids[1]}},
 		{"INSERT INTO tenant_memberships(tenant_id,user_id,role,status) VALUES($1,$2,'admin','active')", []any{ids[1], ids[0]}},
-		{"INSERT INTO collab_workspaces(id,tenant_id,name,slug,description,created_by) VALUES($1,$2,'Default','default','',$3)", []any{ids[2], ids[1], ids[0]}},
+		{"INSERT INTO collab_workspaces(id,tenant_id,name,slug,description,created_by) VALUES($1,$2,'Upgrade tenant','default','',$3)", []any{ids[2], ids[1], ids[0]}},
 		{"INSERT INTO projects(id,tenant_id,owner_user_id,space_id,name,repository_url,default_branch,lifecycle) VALUES($1,$2,$3,$4,'Bound project','https://example.invalid/upg.git','main','active')", []any{ids[3], ids[1], ids[0], ids[2]}},
 		// A live project requires exactly one main workspace (deferred one_main trigger in 0001).
 		{"INSERT INTO workspaces(id,tenant_id,owner_user_id,project_id,kind,desired_state,observed_state) VALUES($1,$2,$3,$4,'main','running','ready')", []any{ids[5], ids[1], ids[0], ids[3]}},
@@ -114,7 +113,7 @@ func TestMigrationUpstream0007UpgradePath(t *testing.T) {
 	}
 	must(t, tx.Commit())
 
-	// Now the current binary migrates the rest (0008-0013) on top of the upstream baseline.
+	// Now the current binary migrates the rest (0008-0014) on top of the upstream baseline.
 	store := newStoreOnSchema(t, pool)
 	must(t, store.Migrate(context.Background()))
 	// Idempotent: a second Migrate and a strict CheckSchema must both pass with no unknown/missing
@@ -129,17 +128,8 @@ func TestMigrationUpstream0007UpgradePath(t *testing.T) {
 		t.Fatalf("upstream 0007 project binding lost: want %s got %v", ids[2], bound)
 	}
 
-	// projects.space_id is now nullable: an unscoped project may be created. The project and its
-	// required main workspace go in one tx so the deferred one_main trigger fires once, at commit.
-	unscopedTx, e := pool.Begin()
-	must(t, e)
-	_, e = unscopedTx.Exec(`INSERT INTO projects(id,tenant_id,owner_user_id,space_id,name,repository_url,default_branch,lifecycle) VALUES($1,$2,$3,NULL,'Unscoped project','https://example.invalid/unscoped.git','main','active')`, ids[4], ids[1], ids[0])
-	must(t, e)
-	_, e = unscopedTx.Exec(`INSERT INTO workspaces(id,tenant_id,owner_user_id,project_id,kind,desired_state,observed_state) VALUES($1,$2,$3,$4,'main','running','ready')`, uuid.NewString(), ids[1], ids[0], ids[4])
-	must(t, e)
-	must(t, unscopedTx.Commit())
-	if !columnNullable(t, pool, "projects", "space_id") {
-		t.Fatal("projects.space_id must be nullable after 0013")
+	if columnNullable(t, pool, "projects", "space_id") {
+		t.Fatal("projects.space_id must be mandatory after 0014")
 	}
 
 	// Issue capability schema (0008-0012) is present.
@@ -152,7 +142,7 @@ func TestMigrationUpstream0007UpgradePath(t *testing.T) {
 
 // TestMigrationFullSequenceFreshDB verifies a clean database from empty through the complete
 // sequence: Migrate PASS, CheckSchema PASS, and the final schema matches the application contract
-// (nullable projects.space_id, composite space FK, project_space_list index, Issue schema intact).
+// (mandatory projects.space_id, composite space FK, project_space_list index, Issue schema intact).
 func TestMigrationFullSequenceFreshDB(t *testing.T) {
 	pool, _ := testSchema(t, "test_fresh_")
 	store := newStoreOnSchema(t, pool)
@@ -160,8 +150,8 @@ func TestMigrationFullSequenceFreshDB(t *testing.T) {
 	must(t, store.Migrate(context.Background()))
 	must(t, store.CheckSchema(context.Background()))
 
-	if !columnNullable(t, pool, "projects", "space_id") {
-		t.Fatal("projects.space_id must be nullable after full sequence")
+	if columnNullable(t, pool, "projects", "space_id") {
+		t.Fatal("projects.space_id must be mandatory after full sequence")
 	}
 	var idxCount int
 	must(t, pool.QueryRow(`SELECT count(*) FROM pg_indexes WHERE schemaname=current_schema() AND indexname='project_space_list'`).Scan(&idxCount))
@@ -181,14 +171,14 @@ func TestMigrationFullSequenceFreshDB(t *testing.T) {
 	for _, table := range []string{
 		"issues", "issue_statuses", "issue_comments", "labels", "issue_labels", "issue_subscribers",
 		"issue_views", "issue_runs", "issue_activities", "issue_context_refs", "issue_interactions",
-		"collab_workspaces", "collab_workspace_members",
+		"collab_workspaces", "tenant_invitations", "tenant_join_links", "tenant_join_requests",
 	} {
 		if !tableExists(t, pool, table) {
 			t.Fatalf("missing table %s", table)
 		}
 	}
 
-	// Sanity: a project can be created unscoped on the fresh schema. All rows go in one tx so the
+	// Sanity: a project can be created in the tenant's sole space. All rows go in one tx so the
 	// deferred triggers (tenant_admin, one_main) fire once, at commit.
 	fuid, ftid, fpid := uuid.NewString(), uuid.NewString(), uuid.NewString()
 	tx, e := pool.Begin()
@@ -199,8 +189,11 @@ func TestMigrationFullSequenceFreshDB(t *testing.T) {
 	must(t, e)
 	_, e = tx.Exec(`INSERT INTO tenant_memberships(tenant_id,user_id,role,status) VALUES($1,$2,'admin','active')`, ftid, fuid)
 	must(t, e)
+	fspace := uuid.NewString()
+	_, e = tx.Exec(`INSERT INTO collab_workspaces(id,tenant_id,name,slug,description,created_by) VALUES($1,$2,'Fresh tenant','fresh-tenant','',$3)`, fspace, ftid, fuid)
+	must(t, e)
 	_, e = tx.Exec(`INSERT INTO projects(id,tenant_id,owner_user_id,space_id,name,repository_url,default_branch,lifecycle)
-		VALUES($1,$2,$3,NULL,'Fresh','https://example.invalid/fresh.git','main','active')`, fpid, ftid, fuid)
+		VALUES($1,$2,$3,$4,'Fresh','https://example.invalid/fresh.git','main','active')`, fpid, ftid, fuid, fspace)
 	must(t, e)
 	// A live project requires exactly one main workspace (deferred one_main trigger in 0001).
 	_, e = tx.Exec(`INSERT INTO workspaces(id,tenant_id,owner_user_id,project_id,kind,desired_state,observed_state)

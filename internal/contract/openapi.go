@@ -81,9 +81,13 @@ func Document() map[string]any {
 	s["MemberListItem"] = resource("id tenantId userId role status version displayName", "")
 	s["Space"] = resource("id tenantId name slug description createdBy version createdAt updatedAt archivedAt", "archivedAt")
 	s["SpaceListItem"] = resource("id tenantId name slug description createdBy version createdAt updatedAt archivedAt role", "archivedAt")
-	s["SpaceMember"] = resource("workspaceId userId role status version createdBy joinedAt", "createdBy")
-	s["SpaceMemberListItem"] = resource("id workspaceId userId role status version displayName joinedAt", "")
-	properties(s, "SpaceMember")["role"] = enumeration("owner", "admin", "member")
+	s["DirectoryPerson"] = resource("globalUserId name employeeNumber departmentName", "")
+	properties(s, "DirectoryPerson")["globalUserId"] = str()
+	s["HuaweiMember"] = resource("tenantId userId role status version displayName", "")
+	s["JoinedMembership"] = resource("tenantId userId role status version name", "")
+	s["Invitation"] = object(obj{"id": uuid(), "tenantId": uuid(), "createdBy": uuid(), "createdAt": timestamp(), "expiresAt": timestamp(), "revokedAt": optional(timestamp()), "consumedBy": optional(uuid()), "consumedAt": optional(timestamp()), "version": number()}, "id", "tenantId", "createdBy", "createdAt", "expiresAt", "version")
+	s["JoinLink"] = object(obj{"id": uuid(), "tenantId": uuid(), "createdBy": uuid(), "createdAt": timestamp(), "expiresAt": timestamp(), "revokedAt": optional(timestamp()), "version": number()}, "id", "tenantId", "createdBy", "createdAt", "expiresAt", "version")
+	s["JoinRequest"] = object(obj{"id": uuid(), "tenantId": uuid(), "userId": uuid(), "linkId": uuid(), "status": enumeration("pending", "approved", "rejected"), "createdAt": timestamp(), "decidedAt": optional(timestamp()), "decidedBy": optional(uuid()), "version": number(), "name": str(), "displayName": str()}, "id", "tenantId", "userId", "linkId", "status", "createdAt", "version")
 	s["SpaceEvent"] = object(obj{"type": enumeration("space.updated", "space.member_updated", "project.created", "project.updated", "project.archived"), "spaceId": uuid(), "projectId": optional(uuid()), "version": number()}, "type", "spaceId")
 	s["Project"] = resource("id tenantId ownerUserId spaceId name repositoryUrl defaultBranch credentialRefId lifecycle version createdAt deletedAt", "spaceId credentialRefId deletedAt")
 	s["Workspace"] = resource("id tenantId ownerUserId projectId kind desiredState observedState runtimeGeneration version admissionOpen admissionEpoch createdAt deletedAt", "deletedAt")
@@ -209,10 +213,17 @@ func Document() map[string]any {
 		}
 		operation := obj{"operationId": strings.ToLower(r.Method) + strings.NewReplacer("/", "_", ":", "").Replace(r.Path), "tags": []string{tag(r)}, "summary": summary(r), "description": description, "security": security, "responses": responses}
 		if public && (r.Method == "POST" || r.Method == "DELETE") {
-			parameters = append(parameters, obj{"name": "Idempotency-Key", "in": "header", "required": true, "schema": obj{"type": "string", "minLength": 1, "maxLength": 200}, "description": "Scoped to tenant and user. Same key and canonical method/path/body returns the original response before version validation; changed request is 409."})
+			keyScope := "Scoped to tenant and user."
+			if strings.HasPrefix(r.Path, "/api/v1/join/") {
+				keyScope = "Scoped to the verified user before tenant membership exists."
+			}
+			parameters = append(parameters, obj{"name": "Idempotency-Key", "in": "header", "required": true, "schema": obj{"type": "string", "minLength": 1, "maxLength": 200}, "description": keyScope + " Same key and canonical method/path/body returns the original response before version validation; changed request is 409."})
 		}
 		if isList(r) {
 			parameters = append(parameters, obj{"name": "limit", "in": "query", "schema": obj{"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}, obj{"name": "after", "in": "query", "schema": uuid(), "description": "Exclusive UUID cursor, ascending stable ordering."})
+		}
+		if r.Path == "/api/v1/tenants/:tid/people" {
+			parameters = append(parameters, obj{"name": "keyword", "in": "query", "required": true, "schema": obj{"type": "string", "minLength": 2, "maxLength": 100}})
 		}
 		if len(parameters) > 0 {
 			operation["parameters"] = parameters
@@ -288,7 +299,7 @@ func tag(r router.Route) string {
 }
 
 func isList(r router.Route) bool {
-	return r.Method == "GET" && (strings.HasSuffix(r.Path, "/tenants") || strings.HasSuffix(r.Path, "/members") || strings.HasSuffix(r.Path, "/projects") || strings.HasSuffix(r.Path, "/workspaces") || strings.HasSuffix(r.Path, "/spaces") || strings.HasSuffix(r.Path, "/resource-status") || strings.HasSuffix(r.Path, "/issue-statuses") || strings.HasSuffix(r.Path, "/labels") || strings.HasSuffix(r.Path, "/issue-views") || strings.HasSuffix(r.Path, "/comments") || strings.HasSuffix(r.Path, "/subscribers"))
+	return r.Method == "GET" && (strings.HasSuffix(r.Path, "/tenants") || strings.HasSuffix(r.Path, "/members") || strings.HasSuffix(r.Path, "/projects") || strings.HasSuffix(r.Path, "/workspaces") || strings.HasSuffix(r.Path, "/spaces") || strings.HasSuffix(r.Path, "/resource-status") || strings.HasSuffix(r.Path, "/issue-statuses") || strings.HasSuffix(r.Path, "/labels") || strings.HasSuffix(r.Path, "/issue-views") || strings.HasSuffix(r.Path, "/comments") || strings.HasSuffix(r.Path, "/subscribers") || strings.HasSuffix(r.Path, "/invitations") || strings.HasSuffix(r.Path, "/join-links") || strings.HasSuffix(r.Path, "/join-requests"))
 }
 
 func responseSchema(r router.Route) (schema obj, status string) {
@@ -314,14 +325,48 @@ func responseSchema(r router.Route) (schema obj, status string) {
 			return ref("Operation"), "200"
 		}
 	}
+	if r.Path == "/api/v1/tenants/:tid/people" {
+		return object(obj{"items": array(ref("DirectoryPerson"))}, "items"), "200"
+	}
+	if r.Path == "/api/v1/tenants/:tid/members/huawei" {
+		return ref("HuaweiMember"), "200"
+	}
+	if r.Path == "/api/v1/join/invitations/redeem" {
+		return ref("JoinedMembership"), "200"
+	}
+	if r.Path == "/api/v1/join/requests" {
+		return ref("JoinRequest"), "201"
+	}
+	if strings.HasSuffix(r.Path, "/invitations") || strings.Contains(r.Path, "/invitations/:iid") {
+		if isList(r) {
+			return object(obj{"items": array(ref("Invitation")), "nextCursor": str()}, "items", "nextCursor"), "200"
+		}
+		if r.Method == "POST" {
+			return ref("Invitation"), "201"
+		}
+		return ref("Invitation"), "200"
+	}
+	if strings.HasSuffix(r.Path, "/join-links") || strings.Contains(r.Path, "/join-links/:lid") {
+		if isList(r) {
+			return object(obj{"items": array(ref("JoinLink")), "nextCursor": str()}, "items", "nextCursor"), "200"
+		}
+		if r.Method == "POST" {
+			return ref("JoinLink"), "201"
+		}
+		return ref("JoinLink"), "200"
+	}
+	if strings.Contains(r.Path, "/join-requests") {
+		if isList(r) {
+			return object(obj{"items": array(ref("JoinRequest")), "nextCursor": str()}, "items", "nextCursor"), "200"
+		}
+		return ref("JoinRequest"), "200"
+	}
+	if r.Path == "/api/v1/me/spaces" {
+		return object(obj{"items": array(ref("SpaceListItem")), "nextCursor": str()}, "items", "nextCursor"), "200"
+	}
 	switch {
 	case strings.Contains(r.Path, "/spaces"):
 		switch {
-		case strings.Contains(r.Path, "/members"):
-			if r.Method == "GET" {
-				return object(obj{"items": array(ref("SpaceMemberListItem")), "nextCursor": str()}, "items", "nextCursor"), "200"
-			}
-			return ref("SpaceMember"), "200"
 		case strings.Contains(r.Path, "/projects"):
 			if r.Method == "GET" {
 				return object(obj{"items": array(ref("Project")), "nextCursor": str()}, "items", "nextCursor"), "200"
@@ -486,7 +531,7 @@ func optionalField(name string, r router.Route) bool {
 		// Confirm must state what it is confirming; assist may be asked with a still-empty form.
 		return strings.HasSuffix(r.Path, "/assist")
 	}
-	return name == "defaultBranch" || name == "credentialRefId" || name == "version" && r.Method == "PUT" || name == "epoch" && r.Action == "access" || name == "workspaceId" && r.Action == "plan" || name == "externalId" && r.Action == "effect_result"
+	return name == "defaultBranch" || name == "credentialRefId" || name == "role" && strings.HasSuffix(r.Path, "/members/huawei") || name == "version" && r.Method == "PUT" || name == "epoch" && r.Action == "access" || name == "workspaceId" && r.Action == "plan" || name == "externalId" && r.Action == "effect_result"
 }
 
 func inputSchema(name string, r router.Route) obj {
@@ -504,9 +549,6 @@ func inputSchema(name string, r router.Route) obj {
 	case "action":
 		return enumeration("read", "execute")
 	case "role":
-		if strings.Contains(r.Path, "/spaces/") {
-			return enumeration("owner", "admin", "member")
-		}
 		return enumeration("admin", "member")
 	case "status":
 		if strings.Contains(r.Path, "/issues") {
@@ -550,7 +592,7 @@ func inputSchema(name string, r router.Route) obj {
 	case "position":
 		return number()
 	case "slug":
-		return obj{"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "Lowercase, immutable, unique per tenant."}
+		return obj{"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "Lowercase, immutable, globally unique."}
 	case "workspaceId":
 		if r.Action == "plan" {
 			return str()
@@ -570,13 +612,27 @@ func summary(r router.Route) string {
 }
 
 func description(r router.Route) string {
-	base := "Public requests require a gateway service credential plus a caller-bound user credential. Tenant membership is checked before lookup; resource reads filter tenant in SQL, and space-scoped projects and their runtime workspaces additionally require active membership of that workspace, while unscoped projects stay owner-scoped. "
+	switch r.Path {
+	case "/api/v1/me/spaces":
+		return "Lists every active collaboration space whose tenant has an active membership for the verified user. A space corresponds to exactly one tenant; clients follow all pages before presenting the switcher."
+	case "/api/v1/me/join-requests":
+		return "Lists the verified user's pending and decided join applications without requiring prior tenant membership."
+	case "/api/v1/join/invitations/redeem":
+		return "Redeems a valid, unrevoked, seven-day single-use invitation after login. Atomically grants ordinary tenant membership; a second user cannot redeem the same link."
+	case "/api/v1/join/requests":
+		return "Submits an application from a valid, unrevoked, thirty-day reusable link after login. The applicant receives no tenant access before an administrator approves it."
+	case "/api/v1/tenants/:tid/people":
+		return "Tenant administrators search the fixed Tianzhou endpoint through Cloud. Machine credentials stay server-side; only employed people and limited directory fields are returned."
+	case "/api/v1/tenants/:tid/members/huawei":
+		return "Tenant administrators add a selected Huawei person by stable globalUserId. Cloud searches Tianzhou again and verifies current employment before creating or reactivating membership."
+	}
+	base := "Public requests require a gateway service credential plus a caller-bound user credential. Active tenant membership is checked before lookup; project and runtime access is shared within that tenant. "
 	if r.Action != "" {
 		base = "Controller requests require an independent controller service credential; holder, active database-time lease epoch and operation version are checked. "
 	}
 	switch r.Action {
 	case "access":
-		return "Checks final user, active membership, tenant and owner. read checks ownership; execute additionally requires current controller lease epoch, open admission, ready workspace and a fresh initialized Node. This lookup is not an execution reservation; use admissions."
+		return "Checks final user, active tenant membership and tenant scope. Execute additionally requires current controller lease epoch, open admission, ready workspace and a fresh initialized Node. This lookup is not an execution reservation; use admissions."
 	case "admit":
 		return "Atomically reserves an active task/interaction ticket on the current Node under the same transaction lock as stop/delete. Requires current controller holder+epoch and caller-bound final-user token. Unknown/uncompleted tickets remain active; bound Node explicitly finishes them. Repeated ticket UUID with identical scope returns it while admission remains open."
 	case "lease_acquire", "lease_renew", "lease_release":
@@ -596,37 +652,29 @@ func description(r router.Route) string {
 	}
 	if strings.Contains(r.Path, "/spaces") {
 		switch {
-		case strings.Contains(r.Path, "/members") && r.Method == "POST":
-			base += "Adds an already-registered user to the space as a plain member by email, resolved in the caller's identity source. Admin or owner only. The target is atomically ensured tenant membership (existing role kept) and thereby gains access to the Projects and Runtime Workspaces shared in that workspace. Unknown or inactive email is 404 user_not_registered; adding an existing member returns the current membership unchanged. "
-		case strings.Contains(r.Path, "/members") && r.Method == "PUT":
-			base += "Updates a member's role (admin/member) or status. Role management is owner-only — admins add members through POST, they cannot change roles. The owner role is immutable: granting owner or any write touching an owner row is 409 ownership_transfer_not_supported (ownership transfer is not implemented). The target user must be an active member of the same tenant; a matching version is required. "
-		case strings.Contains(r.Path, "/members") && r.Method == "DELETE":
-			base += "Removes a member's workspace membership (hard delete); owner only, admins and members cannot remove anyone. The user account, tenant membership and their resources are untouched and remain in the workspace; the removed member's access to the workspace, its projects and runtime workspaces is revoked. An owner row can never be removed, including self-removal (409 cannot_remove_workspace_owner). Requires a matching version and an idempotency key. "
-		case strings.Contains(r.Path, "/members"):
-			base += "Lists the space's members; any active member of the space can read the member list. "
-		case r.Method == "POST" && strings.HasSuffix(r.Path, "/spaces"):
-			base += "Creates the collaboration space and its first owner atomically. slug is lowercase, immutable and unique per tenant. "
 		case strings.Contains(r.Path, "/projects"):
-			base += "Project collection scoped to one collaboration space; membership is required, and project visibility follows workspace membership — any active member of the space can see every active project in it. Deleting a project requires its creator or a space owner/admin. New projects created at the tenant level default into the tenant's default space. "
+			base += "Project collection scoped to the tenant's sole collaboration space; active tenant membership is required. "
 		case r.Method == "PATCH":
-			base += "Only name and description may change; slug is immutable. Requires admin or owner and a matching version. "
-		case r.Method == "DELETE":
-			base += "Archives the space (soft delete); requires owner and a matching version. The default space cannot be archived. Projects are unaffected. "
+			base += "Name and description may change; tenant and space names update together. Slug is immutable. Requires tenant admin and a matching version. "
 		default:
-			base += "Only joined members can read a space. "
+			base += "Every tenant has one collaboration space. Active tenant members can read it. "
 		}
 	}
 	if r.Path == "/api/v1/tenants" && r.Method == "POST" {
-		base = "Public requests require a gateway service credential plus a caller-bound user credential. No tenant membership is required: the verified identity alone authorizes provisioning. Atomically creates a tenant named after the space, makes the caller its first administrator, creates the space with the given slug and makes the caller its owner. The tenant is an implicit container the product never shows. The idempotency key is matched per user across tenants and recorded under the created tenant. "
+		base = "Public requests require a gateway service credential plus a caller-bound user credential. The verified identity authorizes self-service provisioning without prior membership. Atomically creates a tenant and its sole visible collaboration space with the same name and the given globally unique, immutable slug; the caller becomes its first administrator. The idempotency key is matched per user across tenants and recorded under the new tenant. "
 	}
 	if strings.Contains(r.Path, "members") && !strings.Contains(r.Path, "/spaces") {
-		base += "Administrator only. Updating an existing membership requires matching version; new membership uses version=0. Last effective administrator cannot be disabled/demoted, including concurrent changes. "
+		if r.Method == "GET" {
+			base += "Active tenant members may read the roster. "
+		} else {
+			base += "Administrator only. Existing memberships require matching version; new and disabled memberships must enter through a fresh directory check, invitation redemption or approved application. Last effective administrator cannot be disabled/demoted, including concurrent changes. "
+		}
 	}
 	if strings.Contains(r.Path, "resource-status") || strings.Contains(r.Path, "administrative-stop") {
 		base += "Administrator response explicitly excludes repository URL, worktree details, credentials, execution output and operation request/result/error details. Administrative stop still requires idle evidence. "
 	}
 	if strings.Contains(r.Path, "operations") {
-		base += "Operation lookup follows project owner; administrative-stop actor receives only the restricted projection. Retry only accepts blocked/retry_wait, exact operation version, and an idempotency key. "
+		base += "Active tenant members may inspect project operations; administrative-stop remains administrator-only with a restricted projection. Retry only accepts blocked/retry_wait, exact operation version, and an idempotency key. "
 	}
 	if r.Method == "PATCH" && !strings.Contains(r.Path, "/spaces") {
 		base += "Only project name may change; version must match. "
@@ -635,7 +683,7 @@ func description(r router.Route) string {
 		base += "Requires matching resource version and no active project operation. Atomically closes new execution admission. Active tickets return 409 resource_in_use without changing admission. Unknown Node activity requires later proof and remains pending/blocked. main Workspace cannot be independently deleted. "
 	}
 	if strings.HasSuffix(r.Path, "/projects") && r.Method == "POST" {
-		base += "Creates Project/storage/main Workspace/operation atomically. repositoryUrl allows HTTPS or SSH with no password/query/fragment. defaultBranch defaults to HEAD; credentialRefId must belong to tenant and owner. Storage/worktree/sandbox initialization is asynchronous. A project created at the tenant level defaults into the tenant's default collaboration space; the schema keeps space_id nullable for pre-existing unscoped projects, which stay owner-only. "
+		base += "Creates Project/storage/main Workspace/operation atomically in the tenant's sole collaboration space. repositoryUrl allows HTTPS or SSH with no password/query/fragment. defaultBranch defaults to HEAD; credentialRefId must belong to tenant and owner. Storage/worktree/sandbox initialization is asynchronous. "
 	}
 	if strings.HasSuffix(r.Path, "/workspaces") && r.Method == "POST" {
 		base += "Creates one isolated Workspace and Task display identity. title/baseRef required; branch and relative path are server-generated. "
