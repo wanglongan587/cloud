@@ -41,6 +41,7 @@
 - **`0011_issue_interactions.sql`**：新表 `issue_interactions`（`@` 交互脊）——每个选中的协作目标一行：`id, tenant_id, issue_id, comment_id, target_type, target_id, mode, task, run_id, created_at`。（原 `0009_issue_interactions.sql`）
 - **`0012_issue_interaction_input.sql`**：一个通用增量列：`ALTER TABLE issue_interactions ADD COLUMN input jsonb NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(input)='object')` —— 已确认的表单值。刻意排除 `version`、`status` 枚举、`confirmed_at` 与独立 inputs 表；`0011` 不被修改。（原 `0010_issue_interaction_input.sql`）
 - **`0013_project_space_optional.sql`**（append-only 兼容迁移）：`projects.space_id` 恢复为**可空**——upstream `0007` 施加了 `NOT NULL` 并对既有项目做了全量绑定；产品决策（PS3 / D2=C）要求 Space 保持**可选**分组。`0013` 仅放开约束；刻意**不解绑** `0007` 已分配给默认 Space 的项目（无数据改动、无作用域收缩）。
+- **`0014_tenant_membership_and_join.sql`**：收敛为一租户一空间，租户成员身份成为唯一权限来源；恢复项目必须归属空间的约束，空间 slug 在全平台唯一且归档后不复用；为 IDaaS 关联身份、邀请和加入申请增加持久化表。历史多空间、无空间项目、重复 slug 或租户与空间名称不一致的测试数据必须重建；迁移不会静默拆分或改名。
 
 ## 校验和完整性与不可变性
 
