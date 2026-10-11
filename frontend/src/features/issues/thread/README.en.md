@@ -18,6 +18,8 @@ Not owned: creating and listing runs (`useRuns` in `features/issues/api`), the S
 | `thread-composer.tsx` | The "给 Agent 发送消息" textarea, "发送", and "结束会话" with a confirm step |
 | `run-delivery.tsx` | The Revision delivery line under the Thread (`role=status`, named "Revision 交付"): a registered Revision shows its short commit and whether files changed (or, for a resumed run with no new commits, that it reused the resumed work); otherwise `result.deliveryState` explains a skip or failure, and an ended session whose run has not settled shows saving |
 | `run-resume.tsx` | The resume line above the Thread (`role=note`, named "续接"): when the run resumed an earlier Revision of the same Issue, it finds that Revision among the Issue's runs and shows its short commit; a fresh run renders nothing |
+| `run-preparation.tsx` | `RunPreparation` displays server-projected environment, clone, Agent preparation/start phases, the three-attempt clone budget and retry waiting; `SessionFailure` renders only allowlisted safe codes, with no waiting/idle presentation after failure |
+| `thread-failure.ts` | `sessionFailureMessage`: shared finite failure messages for status and durable entries; unknown fields become fixed messages without provider diagnostics |
 | `thread-panel.tsx` | `IssueThreadPanel`: run selection, the "Agent 会话" heading, the state badge, the waiting notice and composition |
 | `*.test.ts(x)` | Pure-function unit tests and MSW integration tests |
 

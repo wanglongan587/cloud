@@ -6,6 +6,7 @@ import type { IssueRun, TenantMember } from '@/features/issues/types'
 import { memberNameById } from '@/features/issues/present'
 import { RunDelivery } from './run-delivery'
 import { RunResume } from './run-resume'
+import { RunPreparation, SessionFailure } from './run-preparation'
 import { useLoadOlderThread, useThread, type ThreadRef, type ThreadSnapshot } from './thread-api'
 import { ThreadComposer } from './thread-composer'
 import { latestAgentRun, threadStateLabel } from './thread-entries'
@@ -15,15 +16,21 @@ function DeclaredThread({
   threadRef,
   snapshot,
   names,
+  preparation,
 }: {
   threadRef: ThreadRef
   snapshot: Extract<ThreadSnapshot, { declared: true }>
   names: ReadonlyMap<string, string>
+  preparation: IssueRun['preparation']
 }) {
   const loadOlder = useLoadOlderThread(threadRef)
   const oldest = snapshot.entries[0]?.seq
   return (
     <>
+      {snapshot.failureCode && <SessionFailure code={snapshot.failureCode} />}
+      {snapshot.threadState === 'pending' && preparation && (
+        <RunPreparation progress={preparation} />
+      )}
       <ThreadMessages
         entries={snapshot.entries}
         hasOlder={oldest !== undefined && oldest > 1}
@@ -75,20 +82,21 @@ function RunThread({
         </h2>
         {snapshot?.declared && (
           <Badge variant="secondary" aria-live="polite">
-            {threadStateLabel(snapshot.threadState)}
+            {snapshot.failureCode ? '运行失败' : threadStateLabel(snapshot.threadState)}
           </Badge>
         )}
       </div>
       <RunResume run={run} runs={runs} />
       {thread.isPending && <Skeleton className="h-16 w-full" />}
       {thread.isError && <p className="text-sm text-destructive">会话加载失败</p>}
-      {snapshot?.declared === false && (
-        <p role="status" className="text-sm text-muted-foreground">
-          等待 Agent 会话启动…
-        </p>
-      )}
+      {snapshot?.declared === false && <RunPreparation progress={run.preparation ?? null} />}
       {snapshot?.declared && (
-        <DeclaredThread threadRef={threadRef} snapshot={snapshot} names={names} />
+        <DeclaredThread
+          threadRef={threadRef}
+          snapshot={snapshot}
+          names={names}
+          preparation={run.preparation}
+        />
       )}
       <RunDelivery
         run={run}

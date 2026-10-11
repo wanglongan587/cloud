@@ -605,6 +605,32 @@ export const IssueRunExecutorType = {
 
 export type IssueRunInput = { [key: string]: unknown };
 
+export type IssueRunPreparationStage = typeof IssueRunPreparationStage[keyof typeof IssueRunPreparationStage];
+
+
+export const IssueRunPreparationStage = {
+  waiting: 'waiting',
+  environment: 'environment',
+  clone: 'clone',
+  plugin: 'plugin',
+  start: 'start',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+/**
+ * @nullable
+ */
+export type IssueRunPreparation = {
+  cloneAttempts: number;
+  /** @nullable */
+  errorCode: string | null;
+  maxCloneAttempts: number;
+  /** @nullable */
+  retryAt: string | null;
+  stage: IssueRunPreparationStage;
+} | null;
+
 /**
  * @nullable
  */
@@ -667,6 +693,8 @@ export interface IssueRun {
   maxAttempts: number;
   /** @nullable */
   parentRunId: string | null;
+  /** @nullable */
+  preparation?: IssueRunPreparation;
   queuedAt: string;
   /** @nullable */
   rerunOfRunId: string | null;
@@ -1132,6 +1160,29 @@ export interface Project {
   spaceId: string;
   tenantId: string;
   version: number;
+}
+
+export type RunPreparationStage = typeof RunPreparationStage[keyof typeof RunPreparationStage];
+
+
+export const RunPreparationStage = {
+  waiting: 'waiting',
+  environment: 'environment',
+  clone: 'clone',
+  plugin: 'plugin',
+  start: 'start',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface RunPreparation {
+  cloneAttempts: number;
+  /** @nullable */
+  errorCode: string | null;
+  maxCloneAttempts: number;
+  /** @nullable */
+  retryAt: string | null;
+  stage: RunPreparationStage;
 }
 
 export type RuntimeControlState = typeof RuntimeControlState[keyof typeof RuntimeControlState];
@@ -2317,6 +2368,8 @@ export const GetApiV1TenantsTidIssuesIidRunsRidThread200ThreadState = {
 export type GetApiV1TenantsTidIssuesIidRunsRidThread200 = {
   canAppend: boolean;
   canEnd: boolean;
+  /** @nullable */
+  failureCode?: string | null;
   /**
      * When the Thread became idle; null in every other state.
      * @nullable

@@ -132,6 +132,21 @@ describe('threadItems', () => {
     ])
     expect(items.map((item) => ('text' in item ? item.text : ''))).toEqual(['one', ''])
   })
+
+  it('reads durable failure codes and replaces untrusted diagnostics with a fixed message', () => {
+    const rows = threadItems([
+      entry(1, { source: 'system', kind: 'session_failed', record: { code: 'agent_turn_failed' } }),
+      entry(2, {
+        source: 'system',
+        kind: 'session_failed',
+        record: { code: 'private provider diagnostic' },
+      }),
+    ])
+    expect(rows).toEqual([
+      { variant: 'note', key: 1, text: '模型请求失败，会话已结束（agent_turn_failed）' },
+      { variant: 'note', key: 2, text: 'Agent 会话失败（agent_failed）' },
+    ])
+  })
 })
 
 describe('labels', () => {

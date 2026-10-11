@@ -52,6 +52,25 @@ Thread reads add `initiatorUserId`, nullable `model{connectionName,modelId,model
 may also end it. Other authorized members may still read. Historical and Echo runs retain their
 existing permissions.
 
+Model forwarding uses only the model-gateway deployment's DNS-over-HTTPS resolver (RFC 8484).
+`MODEL_GATEWAY_DNS_HTTPS_URL` defaults to `https://cloudflare-dns.com/dns-query` and
+`MODEL_GATEWAY_DNS_BOOTSTRAP_IPS` to `1.1.1.1,1.0.0.1`; bootstrap entries must be public numeric IPs.
+Deployment may select another trusted HTTPS resolver; model users cannot. Resolution failure never
+falls back to system DNS. Both resolver and model TLS verify the original hostname; all model
+A/AAAA answers pass policy before numeric dialing. Reserved ranges including `198.18.0.0/15` and
+`2001:2::/48`, mixed public/private answers and redirects remain forbidden. Only exact development
+fixture hosts use Docker DNS; this is never a production fallback.
+
+Safe codes distinguish policy, DNS, TLS, timeout, redirects and unavailability. Logs contain only
+classification, without raw URLs, resolved addresses, bodies, headers or provider errors. ACP
+failure ends the Node session and revokes access; Thread GET's `failureCode` is allowlisted.
+Cancelled `TurnEnded` cannot mark a Thread idle; successful multi-turn sessions still become idle.
+Run GET/List's `preparation` projects environment, clone, Agent preparation/start phases, durable
+clone attempts and retry waiting. A Workspace operation permits three clones, with 5/10-second
+backoff after the first two failures and termination after the third; unknown outcomes stay blocked.
+Failed run Workspaces use the existing release path. A failed primary Workspace retains its data
+and keeps admission closed. No database schema change is needed.
+
 `internal/core/model_connections_db_test.go` uses real isolated PostgreSQL to cover ownership,
 versions, idempotency, disabled accounts, atomic rejection, frozen configuration, runtime generation,
 renewal and revocation. Contract/HTTP boundary tests cover strict model shapes and credential-route

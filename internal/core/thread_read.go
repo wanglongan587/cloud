@@ -113,6 +113,9 @@ func threadRead(t *transaction, r *PublicRequest) Object {
 		// the run resource because it is Thread lifecycle, like `threadState`.
 		"idleSince": run["idleSince"],
 	}
+	if state == "ended" && run.S("failureReason") != "" {
+		out["failureCode"] = publicSessionFailureCode(run.S("failureReason"))
+	}
 	uid := identityWithAlias(t, r.Identity).S("id")
 	for key, value := range threadModelPermissions(t, run, uid) {
 		out[key] = value

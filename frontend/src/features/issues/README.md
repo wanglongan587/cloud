@@ -11,7 +11,7 @@
 | 文件 | 说明 |
 | --- | --- |
 | `api.ts` | Issue、状态、成员、评论、run、时间线、交互与上下文引用的 Query hooks；新建任务可携带 `projectRef`；`useRuns` 在仍有未结束的 agent 运行时每 5 秒刷新（运行结算没有空间事件） |
-| `types.ts` | 与后端契约对应的 Issue 领域类型 |
+| `types.ts` | 与后端契约对应的 Issue 领域类型；运行准备阶段直接引用生成的 `RunPreparation`，不重复维护契约 |
 | `present.ts` | 编号、负责人、状态列等显示用纯函数 |
 | `issues-page.tsx` / `issues-board.tsx` / `issues-list.tsx` | 任务页、看板（拖拽→`move` 锚点）与列表 |
 | `issue-detail-page.tsx` | 详情页：描述与活动栏、属性栏（`components/issue-properties-panel.tsx`）和有 agent run 时的「Agent 会话」栏（`thread/`），为发起者摘要传入成员显示名称 |

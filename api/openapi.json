@@ -1472,6 +1472,49 @@
             "nullable": true,
             "type": "string"
           },
+          "preparation": {
+            "additionalProperties": false,
+            "nullable": true,
+            "properties": {
+              "cloneAttempts": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "errorCode": {
+                "nullable": true,
+                "type": "string"
+              },
+              "maxCloneAttempts": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "retryAt": {
+                "format": "date-time",
+                "nullable": true,
+                "type": "string"
+              },
+              "stage": {
+                "enum": [
+                  "waiting",
+                  "environment",
+                  "clone",
+                  "plugin",
+                  "start",
+                  "failed",
+                  "cancelled"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "stage",
+              "cloneAttempts",
+              "maxCloneAttempts",
+              "retryAt",
+              "errorCode"
+            ],
+            "type": "object"
+          },
           "queuedAt": {
             "format": "date-time",
             "type": "string"
@@ -2781,6 +2824,48 @@
           "version",
           "createdAt",
           "deletedAt"
+        ],
+        "type": "object"
+      },
+      "RunPreparation": {
+        "additionalProperties": false,
+        "properties": {
+          "cloneAttempts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "errorCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "maxCloneAttempts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "retryAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "waiting",
+              "environment",
+              "clone",
+              "plugin",
+              "start",
+              "failed",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "cloneAttempts",
+          "maxCloneAttempts",
+          "retryAt",
+          "errorCode"
         ],
         "type": "object"
       },
@@ -13244,6 +13329,10 @@
                     },
                     "canEnd": {
                       "type": "boolean"
+                    },
+                    "failureCode": {
+                      "nullable": true,
+                      "type": "string"
                     },
                     "idleSince": {
                       "description": "When the Thread became idle; null in every other state.",

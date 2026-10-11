@@ -41,6 +41,21 @@ Thread 读取增加 `initiatorUserId`、可空 `model{connectionName,modelId,mod
 `canAppend`/`canEnd`。使用个人模型的运行仅发起者能追加请求；当前管理员也能结束运行。
 其他有效成员仍可读取 Thread。旧运行与 Echo 不新增个人模型权限限制。
 
+模型转发只使用 model-gateway 部署指定的 DNS-over-HTTPS（RFC 8484）。
+`MODEL_GATEWAY_DNS_HTTPS_URL` 默认 `https://cloudflare-dns.com/dns-query`，
+`MODEL_GATEWAY_DNS_BOOTSTRAP_IPS` 默认 `1.1.1.1,1.0.0.1`；bootstrap 必须是公网数字 IP。
+部署可选择其他可信 HTTPS 解析器。模型用户不能选择解析器；解析失败时不回退系统 DNS。
+解析器连接和模型连接均保留原域名进行 TLS 验证，模型 A/AAAA 全部地址检查后才向数字 IP 拨号。
+`198.18.0.0/15`、`2001:2::/48` 等保留地址、混合公网/私网答案及重定向仍拒绝。
+开发 fixture 只对明确配置的精确主机名使用 Docker DNS，不成为生产回退。
+
+拒绝码区分策略拒绝、解析失败、TLS 验证失败、超时、重定向和上游不可达；日志只写安全分类，
+不记录原始 URL、解析地址、请求体、认证头或供应商错误。ACP 失败终止 Node 会话并撤销授权，
+Thread GET 的 `failureCode` 只来自白名单。取消的 `TurnEnded` 不触发空闲；正常多轮完成仍进入 idle。
+运行 GET/List 的 `preparation` 显示环境、clone、Agent 准备、启动阶段、持久 clone 次数和等待重试。
+同一 Workspace 操作最多三次 clone，首次/第二次失败后等待 5/10 秒，第三次终止；未知结果继续阻塞。
+运行 Workspace 失败后按已有路径释放，项目主 Workspace 保留且不开准入。数据库无需变更。
+
 验证：`internal/core/model_connections_db_test.go` 用真实隔离 PostgreSQL 验证归属、资源版本、
 幂等性、账号停用、缺配置原子回滚、冻结配置、运行代次、授权续期与撤销；契约和 HTTP 边界
 测试验证严格模型结构及写入密钥接口的所有权。完整真实 OpenCode 验收由 cluster 的 M4 接线负责。

@@ -154,6 +154,16 @@ func Document() map[string]any {
 	runProps["input"] = obj{"type": "object", "additionalProperties": true}
 	runProps["result"] = optional(obj{"type": "object", "additionalProperties": true})
 	runProps["externalExecutionId"] = str()
+	// preparation is a safe read projection; internal control identities remain private.
+	preparationProps := obj{
+		"stage":         enumeration("waiting", "environment", "clone", "plugin", "start", "failed", "cancelled"),
+		"cloneAttempts": number(), "maxCloneAttempts": number(),
+		"retryAt": optional(timestamp()), "errorCode": optional(str()),
+	}
+	preparationFields := []string{"stage", "cloneAttempts", "maxCloneAttempts", "retryAt", "errorCode"}
+	s["RunPreparation"] = object(preparationProps, preparationFields...)
+	// OpenAPI 3.0 ignores nullable beside $ref; keep this nullable projection inline.
+	runProps["preparation"] = optional(object(preparationProps, preparationFields...))
 	// revision is the run's registered Revision as metadata only (Cloud Revision D5): no object key,
 	// ref, digest or URL is public. Null until a Revision is registered, and for every non-agent run.
 	// `changed` says whether the run stored a bundle of its own; `priorRevisionId` is the Revision it
@@ -673,6 +683,7 @@ func responseSchema(r router.Route) (schema obj, status string) {
 			"model":           optional(ref("ThreadModel")),
 			"canAppend":       boolean(),
 			"canEnd":          boolean(),
+			"failureCode":     optional(str()),
 			"nextCursor":      obj{"type": "integer", "format": "int64", "nullable": true, "description": "The window's last seq, to be sent back as `after`. Null for an empty window."},
 			"prevCursor":      obj{"type": "integer", "format": "int64", "nullable": true, "description": "The window's first seq, to be sent back as `before`. Null for an empty window."},
 		}, "items", "threadState", "idleSince", "nextCursor", "prevCursor", "initiatorUserId", "model", "canAppend", "canEnd"), "200"

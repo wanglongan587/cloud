@@ -35,7 +35,7 @@ export type ThreadSnapshot =
 
 type ThreadDetails = Pick<
   GetApiV1TenantsTidIssuesIidRunsRidThread200,
-  'initiatorUserId' | 'model' | 'canAppend' | 'canEnd'
+  'initiatorUserId' | 'model' | 'canAppend' | 'canEnd' | 'failureCode'
 >
 
 function threadDetails(page: ThreadDetails): ThreadDetails {
@@ -44,6 +44,7 @@ function threadDetails(page: ThreadDetails): ThreadDetails {
     model: page.model,
     canAppend: page.canAppend,
     canEnd: page.canEnd,
+    failureCode: page.failureCode ?? null,
   }
 }
 
