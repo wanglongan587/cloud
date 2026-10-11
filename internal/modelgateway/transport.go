@@ -19,6 +19,7 @@ var reservedNetworks = []netip.Prefix{
 	netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("192.0.2.0/24"), netip.MustParsePrefix("192.168.0.0/16"),
 	netip.MustParsePrefix("198.18.0.0/15"), netip.MustParsePrefix("198.51.100.0/24"), netip.MustParsePrefix("203.0.113.0/24"),
 	netip.MustParsePrefix("224.0.0.0/4"), netip.MustParsePrefix("240.0.0.0/4"), netip.MustParsePrefix("2001::/32"),
+	netip.MustParsePrefix("2001:2::/48"),
 	netip.MustParsePrefix("2001:db8::/32"), netip.MustParsePrefix("2002::/16"), netip.MustParsePrefix("64:ff9b::/96"),
 	netip.MustParsePrefix("64:ff9b:1::/48"), netip.MustParsePrefix("fc00::/7"), netip.MustParsePrefix("fe80::/10"),
 }
@@ -41,6 +42,7 @@ type addressResolver interface {
 }
 type secureDialer struct {
 	resolver addressResolver
+	fixtures addressResolver
 	dialer   net.Dialer
 	allowed  map[string]struct{}
 }
@@ -50,18 +52,24 @@ type secureDialer struct {
 func (d *secureDialer) dial(ctx context.Context, network, address string) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, errors.New("invalid model endpoint")
-	}
-	addresses, err := d.resolver.LookupNetIP(ctx, "ip", host)
-	if err != nil || len(addresses) == 0 {
-		return nil, errors.New("model endpoint resolution failed")
+		return nil, endpointInvalid
 	}
 	_, trustedFixture := d.allowed[strings.ToLower(host)]
+	resolver := d.resolver
+	if trustedFixture && d.fixtures != nil {
+		resolver = d.fixtures
+	}
+	addresses, err := resolver.LookupNetIP(ctx, "ip", host)
+	if err != nil || len(addresses) == 0 {
+		return nil, endpointResolutionFailed
+	}
 	for _, a := range addresses {
 		if !trustedFixture && !publicAddress(a) {
-			return nil, errors.New("private model endpoint forbidden")
+			return nil, endpointForbidden
 		}
 	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 	for _, a := range addresses {
 		connection, dialErr := d.dialer.DialContext(ctx, network, net.JoinHostPort(a.String(), port))
 		if dialErr == nil {
@@ -71,22 +79,43 @@ func (d *secureDialer) dial(ctx context.Context, network, address string) (net.C
 			return nil, ctx.Err()
 		}
 	}
-	return nil, errors.New("model endpoint unavailable")
+	return nil, endpointUnavailable
+}
+
+// UpstreamConfig fixes deployment-owned DNS and exact development fixture exemptions.
+type UpstreamConfig struct {
+	DevelopmentHosts []string
+	DNS              DNSConfig
 }
 
 // NewUpstreamClient disables environmental proxies and redirects, and enforces the public-address
 // policy at connection time. Exact fixture host exemptions are deployment-owned, development only.
-func NewUpstreamClient(fixtureHosts []string) (*http.Client, error) {
+func NewUpstreamClient(config UpstreamConfig) (*http.Client, error) {
 	allowed := map[string]struct{}{}
-	for _, host := range fixtureHosts {
+	for _, host := range config.DevelopmentHosts {
 		if host == "" || strings.ContainsAny(host, "/:* \r\n\t") {
 			return nil, errors.New("invalid model fixture hostname")
 		}
 		allowed[strings.ToLower(host)] = struct{}{}
 	}
-	d := &secureDialer{resolver: net.DefaultResolver, dialer: net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}, allowed: allowed}
+	resolver, err := newHTTPSResolver(config.DNS)
+	if err != nil {
+		return nil, err
+	}
+	d := &secureDialer{resolver: resolver, fixtures: net.DefaultResolver, dialer: net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}, allowed: allowed}
 	transport := &http.Transport{Proxy: nil, DialContext: d.dial, TLSHandshakeTimeout: 10 * time.Second, ResponseHeaderTimeout: 30 * time.Second, IdleConnTimeout: 60 * time.Second, MaxIdleConns: 64, MaxConnsPerHost: 32, MaxResponseHeaderBytes: 64 << 10, ForceAttemptHTTP2: true}
-	return &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("model redirects forbidden") }}, nil
+	return &http.Client{Transport: &upstreamTransport{Transport: transport, resolver: resolver}, CheckRedirect: func(*http.Request, []*http.Request) error { return endpointRedirectForbidden }}, nil
+}
+
+type upstreamTransport struct {
+	*http.Transport
+	resolver *httpsResolver
+}
+
+// CloseIdleConnections releases both model and DNS pools owned by this client.
+func (t *upstreamTransport) CloseIdleConnections() {
+	t.Transport.CloseIdleConnections()
+	t.resolver.client.CloseIdleConnections()
 }
 
 func upstreamURL(base, protocol string) (string, error) {

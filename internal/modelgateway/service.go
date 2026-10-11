@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 
 	"github.com/wanglongan587/cloud/internal/core"
 )
@@ -43,6 +44,7 @@ type Options struct {
 	Upstream        *http.Client
 	RecheckInterval time.Duration
 	Health          func(context.Context) error
+	Logger          *zap.Logger
 }
 
 // Service owns the model boundary; it holds no authoritative business or token state in memory.
@@ -54,6 +56,9 @@ func New(input *Options) (*Service, error) {
 		return nil, errors.New("model gateway options are required")
 	}
 	o := *input
+	if o.Logger == nil {
+		o.Logger = zap.NewNop()
+	}
 	u, err := url.Parse(o.PublicOrigin)
 	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
 		return nil, errors.New("model public origin must be a fixed HTTPS origin")

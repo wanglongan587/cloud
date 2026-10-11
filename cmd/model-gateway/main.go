@@ -15,6 +15,7 @@ import (
 
 	"github.com/wanglongan587/cloud/internal/config"
 	"github.com/wanglongan587/cloud/internal/core"
+	"github.com/wanglongan587/cloud/internal/logger"
 	"github.com/wanglongan587/cloud/internal/modelgateway"
 	"github.com/wanglongan587/cloud/internal/repository"
 )
@@ -27,7 +28,7 @@ func main() {
 }
 
 // run owns every listener and request context; shutdown cancels model streams before joining servers.
-func run() error {
+func run() (runErr error) {
 	path := flag.String("config", "", "Cloud database and verification-key configuration")
 	health := flag.Bool("healthcheck", false, "verify credential service readiness without reading private keys")
 	flag.Parse()
@@ -71,11 +72,16 @@ func run() error {
 	if err := modelgateway.VerifyExistingKey(ctx, store.Pool, cipher); err != nil {
 		return err
 	}
-	client, err := modelgateway.NewUpstreamClient(deployment.DevelopmentHosts)
+	log, err := logger.New(cfg.Logger)
 	if err != nil {
 		return err
 	}
-	service, err := modelgateway.New(&modelgateway.Options{Store: store, Auth: auth, Cipher: cipher, PublicOrigin: deployment.PublicOrigin, Upstream: client, Health: store.Pool.PingContext})
+	defer func() { runErr = errors.Join(runErr, logger.Sync(log)) }()
+	client, err := modelgateway.NewUpstreamClient(modelgateway.UpstreamConfig{DevelopmentHosts: deployment.DevelopmentHosts, DNS: deployment.DNS})
+	if err != nil {
+		return err
+	}
+	service, err := modelgateway.New(&modelgateway.Options{Store: store, Auth: auth, Cipher: cipher, PublicOrigin: deployment.PublicOrigin, Upstream: client, Health: store.Pool.PingContext, Logger: log})
 	if err != nil {
 		return err
 	}

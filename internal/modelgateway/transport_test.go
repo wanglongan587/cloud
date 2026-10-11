@@ -13,7 +13,7 @@ func (r fixedResolver) LookupNetIP(context.Context, string, string) ([]netip.Add
 }
 
 func TestModelEndpointPolicyRejectsPrivateReservedAndMixedDNS(t *testing.T) {
-	for _, value := range []string{"127.0.0.1", "10.0.0.1", "169.254.169.254", "100.64.0.1", "192.0.2.1", "198.18.0.1", "::1", "::ffff:127.0.0.1", "fc00::1", "2001:db8::1", "64:ff9b::a00:1"} {
+	for _, value := range []string{"127.0.0.1", "10.0.0.1", "169.254.169.254", "100.64.0.1", "192.0.2.1", "198.18.0.1", "::1", "::ffff:127.0.0.1", "fc00::1", "2001:db8::1", "2001:2::b", "2001:2:0:ffff:ffff:ffff:ffff:ffff", "64:ff9b::a00:1"} {
 		if publicAddress(netip.MustParseAddr(value)) {
 			t.Errorf("forbidden address accepted: %s", value)
 		}

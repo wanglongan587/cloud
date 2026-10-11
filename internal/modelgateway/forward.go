@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const maxModelRequestBytes = 8 << 20
@@ -132,7 +134,9 @@ func (s *Service) ModelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	response, err := s.options.Upstream.Do(out)
 	if err != nil {
-		reject(w, 502, "model_upstream_unavailable")
+		code := upstreamFailureCode(err)
+		s.options.Logger.Warn("model upstream request rejected", zap.String("code", code))
+		reject(w, 502, code)
 		return
 	}
 	defer response.Body.Close()
