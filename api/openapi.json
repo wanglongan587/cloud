@@ -4440,6 +4440,11 @@
       "ScheduledTaskOccurrence": {
         "additionalProperties": false,
         "properties": {
+          "artifactCount": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
           "failureReason": {
             "nullable": true,
             "type": "string"
@@ -4450,6 +4455,11 @@
           },
           "outcome": {
             "type": "string"
+          },
+          "rejectedArtifactCount": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
           },
           "runId": {
             "format": "uuid",
@@ -4468,6 +4478,14 @@
           "taskRevision": {
             "format": "int64",
             "type": "integer"
+          },
+          "verdict": {
+            "nullable": true,
+            "type": "string"
+          },
+          "verdictDetail": {
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
