@@ -4,6 +4,8 @@
 
 Translates [controlpb](../controlpb/README.en.md) requests into Core calls and Faults into gRPC statuses. Core owns business rules, submission deduplication, leases and recovery state.
 
+`workflow_history_codec.go` preserves the ordered node/attempt/execution declarations and measured history objects of a WorkflowRun delivery, including fixed object keys. It does not grant access or decide verification outcomes; the core remains the sole authority.
+
 | File | Responsibility |
 |---|---|
 | `server.go` | `NewSecure` / `NewDevelopment`, identity interceptors, service registration and keepalive |

@@ -1525,9 +1525,12 @@ type DeliverRevisionSpec struct {
 	DeliveryRef string `protobuf:"bytes,9,opt,name=delivery_ref,json=deliveryRef,proto3" json:"delivery_ref,omitempty"`
 	// The run Workspace's branch, from its clone input. The Node fast-forwards it to the final commit
 	// after the delivery ref is pushed; failing to do so never fails the delivery.
-	WorkspaceRef  string `protobuf:"bytes,10,opt,name=workspace_ref,json=workspaceRef,proto3" json:"workspace_ref,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	WorkspaceRef string `protobuf:"bytes,10,opt,name=workspace_ref,json=workspaceRef,proto3" json:"workspace_ref,omitempty"`
+	// Non-empty only for a WorkflowRun. The anchor session above must be the first member.
+	// Every member belongs to this checkout and must be settled before any snapshot or upload.
+	WorkflowSessions []*WorkflowHistorySession `protobuf:"bytes,11,rep,name=workflow_sessions,json=workflowSessions,proto3" json:"workflow_sessions,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *DeliverRevisionSpec) Reset() {
@@ -1623,6 +1626,151 @@ func (x *DeliverRevisionSpec) GetWorkspaceRef() string {
 	return ""
 }
 
+func (x *DeliverRevisionSpec) GetWorkflowSessions() []*WorkflowHistorySession {
+	if x != nil {
+		return x.WorkflowSessions
+	}
+	return nil
+}
+
+// Frozen identity and object location of one established workflow session attempt.
+type WorkflowHistorySession struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Attempt       uint32                 `protobuf:"varint,2,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	ExecutionId   string                 `protobuf:"bytes,3,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
+	HistoryKey    string                 `protobuf:"bytes,4,opt,name=history_key,json=historyKey,proto3" json:"history_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkflowHistorySession) Reset() {
+	*x = WorkflowHistorySession{}
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkflowHistorySession) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkflowHistorySession) ProtoMessage() {}
+
+func (x *WorkflowHistorySession) ProtoReflect() protoreflect.Message {
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkflowHistorySession.ProtoReflect.Descriptor instead.
+func (*WorkflowHistorySession) Descriptor() ([]byte, []int) {
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *WorkflowHistorySession) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *WorkflowHistorySession) GetAttempt() uint32 {
+	if x != nil {
+		return x.Attempt
+	}
+	return 0
+}
+
+func (x *WorkflowHistorySession) GetExecutionId() string {
+	if x != nil {
+		return x.ExecutionId
+	}
+	return ""
+}
+
+func (x *WorkflowHistorySession) GetHistoryKey() string {
+	if x != nil {
+		return x.HistoryKey
+	}
+	return ""
+}
+
+// Node-measured history for exactly one declared session; Cloud checks the fixed identity and key.
+type WorkflowHistoryObject struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Attempt       uint32                 `protobuf:"varint,2,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	ExecutionId   string                 `protobuf:"bytes,3,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
+	History       *StoredObject          `protobuf:"bytes,4,opt,name=history,proto3" json:"history,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkflowHistoryObject) Reset() {
+	*x = WorkflowHistoryObject{}
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkflowHistoryObject) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkflowHistoryObject) ProtoMessage() {}
+
+func (x *WorkflowHistoryObject) ProtoReflect() protoreflect.Message {
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkflowHistoryObject.ProtoReflect.Descriptor instead.
+func (*WorkflowHistoryObject) Descriptor() ([]byte, []int) {
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *WorkflowHistoryObject) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *WorkflowHistoryObject) GetAttempt() uint32 {
+	if x != nil {
+		return x.Attempt
+	}
+	return 0
+}
+
+func (x *WorkflowHistoryObject) GetExecutionId() string {
+	if x != nil {
+		return x.ExecutionId
+	}
+	return ""
+}
+
+func (x *WorkflowHistoryObject) GetHistory() *StoredObject {
+	if x != nil {
+		return x.History
+	}
+	return nil
+}
+
 // An object the Node uploaded, as the Node measured it; Cloud verifies it before registering.
 type StoredObject struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1636,7 +1784,7 @@ type StoredObject struct {
 
 func (x *StoredObject) Reset() {
 	*x = StoredObject{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[15]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1648,7 +1796,7 @@ func (x *StoredObject) String() string {
 func (*StoredObject) ProtoMessage() {}
 
 func (x *StoredObject) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[15]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1661,7 +1809,7 @@ func (x *StoredObject) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoredObject.ProtoReflect.Descriptor instead.
 func (*StoredObject) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{15}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StoredObject) GetKey() string {
@@ -1687,18 +1835,19 @@ func (x *StoredObject) GetSha256() string {
 
 // The final commit was pushed to the input's delivery_ref; Cloud verifies the ref before registering.
 type RevisionDelivered struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FinalCommit   string                 `protobuf:"bytes,1,opt,name=final_commit,json=finalCommit,proto3" json:"final_commit,omitempty"`
-	BaseCommit    string                 `protobuf:"bytes,2,opt,name=base_commit,json=baseCommit,proto3" json:"base_commit,omitempty"`
-	RevisionRef   string                 `protobuf:"bytes,3,opt,name=revision_ref,json=revisionRef,proto3" json:"revision_ref,omitempty"`
-	History       *StoredObject          `protobuf:"bytes,5,opt,name=history,proto3" json:"history,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState   `protogen:"open.v1"`
+	FinalCommit       string                   `protobuf:"bytes,1,opt,name=final_commit,json=finalCommit,proto3" json:"final_commit,omitempty"`
+	BaseCommit        string                   `protobuf:"bytes,2,opt,name=base_commit,json=baseCommit,proto3" json:"base_commit,omitempty"`
+	RevisionRef       string                   `protobuf:"bytes,3,opt,name=revision_ref,json=revisionRef,proto3" json:"revision_ref,omitempty"`
+	History           *StoredObject            `protobuf:"bytes,5,opt,name=history,proto3" json:"history,omitempty"`
+	WorkflowHistories []*WorkflowHistoryObject `protobuf:"bytes,6,rep,name=workflow_histories,json=workflowHistories,proto3" json:"workflow_histories,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *RevisionDelivered) Reset() {
 	*x = RevisionDelivered{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[16]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1710,7 +1859,7 @@ func (x *RevisionDelivered) String() string {
 func (*RevisionDelivered) ProtoMessage() {}
 
 func (x *RevisionDelivered) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[16]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1723,7 +1872,7 @@ func (x *RevisionDelivered) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevisionDelivered.ProtoReflect.Descriptor instead.
 func (*RevisionDelivered) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{16}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RevisionDelivered) GetFinalCommit() string {
@@ -1754,22 +1903,30 @@ func (x *RevisionDelivered) GetHistory() *StoredObject {
 	return nil
 }
 
+func (x *RevisionDelivered) GetWorkflowHistories() []*WorkflowHistoryObject {
+	if x != nil {
+		return x.WorkflowHistories
+	}
+	return nil
+}
+
 // The final commit equals the base commit, or the delivery spec's prior_revision final commit (a
 // resumed run that added nothing). It still pushes its own delivery_ref and attempts to fast-forward
 // workspace_ref before uploading only the session history.
 type RevisionUnchanged struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FinalCommit   string                 `protobuf:"bytes,1,opt,name=final_commit,json=finalCommit,proto3" json:"final_commit,omitempty"`
-	BaseCommit    string                 `protobuf:"bytes,2,opt,name=base_commit,json=baseCommit,proto3" json:"base_commit,omitempty"`
-	RevisionRef   string                 `protobuf:"bytes,3,opt,name=revision_ref,json=revisionRef,proto3" json:"revision_ref,omitempty"`
-	History       *StoredObject          `protobuf:"bytes,4,opt,name=history,proto3" json:"history,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState   `protogen:"open.v1"`
+	FinalCommit       string                   `protobuf:"bytes,1,opt,name=final_commit,json=finalCommit,proto3" json:"final_commit,omitempty"`
+	BaseCommit        string                   `protobuf:"bytes,2,opt,name=base_commit,json=baseCommit,proto3" json:"base_commit,omitempty"`
+	RevisionRef       string                   `protobuf:"bytes,3,opt,name=revision_ref,json=revisionRef,proto3" json:"revision_ref,omitempty"`
+	History           *StoredObject            `protobuf:"bytes,4,opt,name=history,proto3" json:"history,omitempty"`
+	WorkflowHistories []*WorkflowHistoryObject `protobuf:"bytes,5,rep,name=workflow_histories,json=workflowHistories,proto3" json:"workflow_histories,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *RevisionUnchanged) Reset() {
 	*x = RevisionUnchanged{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[17]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1781,7 +1938,7 @@ func (x *RevisionUnchanged) String() string {
 func (*RevisionUnchanged) ProtoMessage() {}
 
 func (x *RevisionUnchanged) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[17]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1794,7 +1951,7 @@ func (x *RevisionUnchanged) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevisionUnchanged.ProtoReflect.Descriptor instead.
 func (*RevisionUnchanged) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{17}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RevisionUnchanged) GetFinalCommit() string {
@@ -1825,6 +1982,13 @@ func (x *RevisionUnchanged) GetHistory() *StoredObject {
 	return nil
 }
 
+func (x *RevisionUnchanged) GetWorkflowHistories() []*WorkflowHistoryObject {
+	if x != nil {
+		return x.WorkflowHistories
+	}
+	return nil
+}
+
 type RevisionFailed struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Reason        RevisionFailureReason  `protobuf:"varint,1,opt,name=reason,proto3,enum=ora.cloud.internal.v1.RevisionFailureReason" json:"reason,omitempty"`
@@ -1834,7 +1998,7 @@ type RevisionFailed struct {
 
 func (x *RevisionFailed) Reset() {
 	*x = RevisionFailed{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[18]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1846,7 +2010,7 @@ func (x *RevisionFailed) String() string {
 func (*RevisionFailed) ProtoMessage() {}
 
 func (x *RevisionFailed) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[18]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1859,7 +2023,7 @@ func (x *RevisionFailed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevisionFailed.ProtoReflect.Descriptor instead.
 func (*RevisionFailed) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{18}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RevisionFailed) GetReason() RevisionFailureReason {
@@ -1882,7 +2046,7 @@ type DeliverScheduledArtifactsSpec struct {
 
 func (x *DeliverScheduledArtifactsSpec) Reset() {
 	*x = DeliverScheduledArtifactsSpec{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[19]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1894,7 +2058,7 @@ func (x *DeliverScheduledArtifactsSpec) String() string {
 func (*DeliverScheduledArtifactsSpec) ProtoMessage() {}
 
 func (x *DeliverScheduledArtifactsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[19]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1907,7 +2071,7 @@ func (x *DeliverScheduledArtifactsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeliverScheduledArtifactsSpec.ProtoReflect.Descriptor instead.
 func (*DeliverScheduledArtifactsSpec) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{19}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DeliverScheduledArtifactsSpec) GetSessionExecutionId() string {
@@ -1928,7 +2092,7 @@ type ScheduledArtifactsDelivered struct {
 
 func (x *ScheduledArtifactsDelivered) Reset() {
 	*x = ScheduledArtifactsDelivered{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[20]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1940,7 +2104,7 @@ func (x *ScheduledArtifactsDelivered) String() string {
 func (*ScheduledArtifactsDelivered) ProtoMessage() {}
 
 func (x *ScheduledArtifactsDelivered) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[20]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1953,7 +2117,7 @@ func (x *ScheduledArtifactsDelivered) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduledArtifactsDelivered.ProtoReflect.Descriptor instead.
 func (*ScheduledArtifactsDelivered) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{20}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ScheduledArtifactsDelivered) GetArtifacts() []*StoredObject {
@@ -1972,7 +2136,7 @@ type ScheduledArtifactsFailed struct {
 
 func (x *ScheduledArtifactsFailed) Reset() {
 	*x = ScheduledArtifactsFailed{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[21]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1984,7 +2148,7 @@ func (x *ScheduledArtifactsFailed) String() string {
 func (*ScheduledArtifactsFailed) ProtoMessage() {}
 
 func (x *ScheduledArtifactsFailed) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[21]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1997,7 +2161,7 @@ func (x *ScheduledArtifactsFailed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduledArtifactsFailed.ProtoReflect.Descriptor instead.
 func (*ScheduledArtifactsFailed) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{21}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ScheduledArtifactsFailed) GetReason() ScheduledArtifactsFailureReason {
@@ -2027,7 +2191,7 @@ type UploadGrant struct {
 
 func (x *UploadGrant) Reset() {
 	*x = UploadGrant{}
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[22]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2039,7 +2203,7 @@ func (x *UploadGrant) String() string {
 func (*UploadGrant) ProtoMessage() {}
 
 func (x *UploadGrant) ProtoReflect() protoreflect.Message {
-	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[22]
+	mi := &file_ora_cloud_internal_v1_agent_executions_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2052,7 +2216,7 @@ func (x *UploadGrant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadGrant.ProtoReflect.Descriptor instead.
 func (*UploadGrant) Descriptor() ([]byte, []int) {
-	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{22}
+	return file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UploadGrant) GetObjectKey() string {
@@ -2181,7 +2345,7 @@ const file_ora_cloud_internal_v1_agent_executions_proto_rawDesc = "" +
 	"rejections\x18\x02 \x03(\v21.ora.cloud.internal.v1.ScheduledArtifactRejectionR\n" +
 	"rejections\x12-\n" +
 	"\x12omitted_rejections\x18\x03 \x01(\rR\x11omittedRejections\x12%\n" +
-	"\x0ewalk_truncated\x18\x04 \x01(\bR\rwalkTruncated\"\xb5\x03\n" +
+	"\x0ewalk_truncated\x18\x04 \x01(\bR\rwalkTruncated\"\x91\x04\n" +
 	"\x13DeliverRevisionSpec\x120\n" +
 	"\x14session_execution_id\x18\x01 \x01(\tR\x12sessionExecutionId\x122\n" +
 	"\x15checkout_execution_id\x18\x02 \x01(\tR\x13checkoutExecutionId\x12\x1f\n" +
@@ -2194,24 +2358,38 @@ const file_ora_cloud_internal_v1_agent_executions_proto_rawDesc = "" +
 	"\x12git_repository_url\x18\b \x01(\tR\x10gitRepositoryUrl\x12!\n" +
 	"\fdelivery_ref\x18\t \x01(\tR\vdeliveryRef\x12#\n" +
 	"\rworkspace_ref\x18\n" +
-	" \x01(\tR\fworkspaceRefJ\x04\b\x05\x10\x06R\n" +
-	"bundle_key\"L\n" +
+	" \x01(\tR\fworkspaceRef\x12Z\n" +
+	"\x11workflow_sessions\x18\v \x03(\v2-.ora.cloud.internal.v1.WorkflowHistorySessionR\x10workflowSessionsJ\x04\b\x05\x10\x06R\n" +
+	"bundle_key\"\x8f\x01\n" +
+	"\x16WorkflowHistorySession\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x18\n" +
+	"\aattempt\x18\x02 \x01(\rR\aattempt\x12!\n" +
+	"\fexecution_id\x18\x03 \x01(\tR\vexecutionId\x12\x1f\n" +
+	"\vhistory_key\x18\x04 \x01(\tR\n" +
+	"historyKey\"\xac\x01\n" +
+	"\x15WorkflowHistoryObject\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x18\n" +
+	"\aattempt\x18\x02 \x01(\rR\aattempt\x12!\n" +
+	"\fexecution_id\x18\x03 \x01(\tR\vexecutionId\x12=\n" +
+	"\ahistory\x18\x04 \x01(\v2#.ora.cloud.internal.v1.StoredObjectR\ahistory\"L\n" +
 	"\fStoredObject\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x04R\x04size\x12\x16\n" +
-	"\x06sha256\x18\x03 \x01(\tR\x06sha256\"\xc7\x01\n" +
+	"\x06sha256\x18\x03 \x01(\tR\x06sha256\"\xa4\x02\n" +
 	"\x11RevisionDelivered\x12!\n" +
 	"\ffinal_commit\x18\x01 \x01(\tR\vfinalCommit\x12\x1f\n" +
 	"\vbase_commit\x18\x02 \x01(\tR\n" +
 	"baseCommit\x12!\n" +
 	"\frevision_ref\x18\x03 \x01(\tR\vrevisionRef\x12=\n" +
-	"\ahistory\x18\x05 \x01(\v2#.ora.cloud.internal.v1.StoredObjectR\ahistoryJ\x04\b\x04\x10\x05R\x06bundle\"\xb9\x01\n" +
+	"\ahistory\x18\x05 \x01(\v2#.ora.cloud.internal.v1.StoredObjectR\ahistory\x12[\n" +
+	"\x12workflow_histories\x18\x06 \x03(\v2,.ora.cloud.internal.v1.WorkflowHistoryObjectR\x11workflowHistoriesJ\x04\b\x04\x10\x05R\x06bundle\"\x96\x02\n" +
 	"\x11RevisionUnchanged\x12!\n" +
 	"\ffinal_commit\x18\x01 \x01(\tR\vfinalCommit\x12\x1f\n" +
 	"\vbase_commit\x18\x02 \x01(\tR\n" +
 	"baseCommit\x12!\n" +
 	"\frevision_ref\x18\x03 \x01(\tR\vrevisionRef\x12=\n" +
-	"\ahistory\x18\x04 \x01(\v2#.ora.cloud.internal.v1.StoredObjectR\ahistory\"V\n" +
+	"\ahistory\x18\x04 \x01(\v2#.ora.cloud.internal.v1.StoredObjectR\ahistory\x12[\n" +
+	"\x12workflow_histories\x18\x05 \x03(\v2,.ora.cloud.internal.v1.WorkflowHistoryObjectR\x11workflowHistories\"V\n" +
 	"\x0eRevisionFailed\x12D\n" +
 	"\x06reason\x18\x01 \x01(\x0e2,.ora.cloud.internal.v1.RevisionFailureReasonR\x06reason\"Q\n" +
 	"\x1dDeliverScheduledArtifactsSpec\x120\n" +
@@ -2299,7 +2477,7 @@ func file_ora_cloud_internal_v1_agent_executions_proto_rawDescGZIP() []byte {
 }
 
 var file_ora_cloud_internal_v1_agent_executions_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_ora_cloud_internal_v1_agent_executions_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_ora_cloud_internal_v1_agent_executions_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_ora_cloud_internal_v1_agent_executions_proto_goTypes = []any{
 	(AgentSessionTrigger)(0),              // 0: ora.cloud.internal.v1.AgentSessionTrigger
 	(AgentSessionEndReason)(0),            // 1: ora.cloud.internal.v1.AgentSessionEndReason
@@ -2323,16 +2501,18 @@ var file_ora_cloud_internal_v1_agent_executions_proto_goTypes = []any{
 	(*ScheduledArtifactRejection)(nil),    // 19: ora.cloud.internal.v1.ScheduledArtifactRejection
 	(*ScheduledArtifactManifest)(nil),     // 20: ora.cloud.internal.v1.ScheduledArtifactManifest
 	(*DeliverRevisionSpec)(nil),           // 21: ora.cloud.internal.v1.DeliverRevisionSpec
-	(*StoredObject)(nil),                  // 22: ora.cloud.internal.v1.StoredObject
-	(*RevisionDelivered)(nil),             // 23: ora.cloud.internal.v1.RevisionDelivered
-	(*RevisionUnchanged)(nil),             // 24: ora.cloud.internal.v1.RevisionUnchanged
-	(*RevisionFailed)(nil),                // 25: ora.cloud.internal.v1.RevisionFailed
-	(*DeliverScheduledArtifactsSpec)(nil), // 26: ora.cloud.internal.v1.DeliverScheduledArtifactsSpec
-	(*ScheduledArtifactsDelivered)(nil),   // 27: ora.cloud.internal.v1.ScheduledArtifactsDelivered
-	(*ScheduledArtifactsFailed)(nil),      // 28: ora.cloud.internal.v1.ScheduledArtifactsFailed
-	(*UploadGrant)(nil),                   // 29: ora.cloud.internal.v1.UploadGrant
-	nil,                                   // 30: ora.cloud.internal.v1.UploadGrant.HeadersEntry
-	(*timestamppb.Timestamp)(nil),         // 31: google.protobuf.Timestamp
+	(*WorkflowHistorySession)(nil),        // 22: ora.cloud.internal.v1.WorkflowHistorySession
+	(*WorkflowHistoryObject)(nil),         // 23: ora.cloud.internal.v1.WorkflowHistoryObject
+	(*StoredObject)(nil),                  // 24: ora.cloud.internal.v1.StoredObject
+	(*RevisionDelivered)(nil),             // 25: ora.cloud.internal.v1.RevisionDelivered
+	(*RevisionUnchanged)(nil),             // 26: ora.cloud.internal.v1.RevisionUnchanged
+	(*RevisionFailed)(nil),                // 27: ora.cloud.internal.v1.RevisionFailed
+	(*DeliverScheduledArtifactsSpec)(nil), // 28: ora.cloud.internal.v1.DeliverScheduledArtifactsSpec
+	(*ScheduledArtifactsDelivered)(nil),   // 29: ora.cloud.internal.v1.ScheduledArtifactsDelivered
+	(*ScheduledArtifactsFailed)(nil),      // 30: ora.cloud.internal.v1.ScheduledArtifactsFailed
+	(*UploadGrant)(nil),                   // 31: ora.cloud.internal.v1.UploadGrant
+	nil,                                   // 32: ora.cloud.internal.v1.UploadGrant.HeadersEntry
+	(*timestamppb.Timestamp)(nil),         // 33: google.protobuf.Timestamp
 }
 var file_ora_cloud_internal_v1_agent_executions_proto_depIdxs = []int32{
 	8,  // 0: ora.cloud.internal.v1.ContentBlock.text:type_name -> ora.cloud.internal.v1.TextContent
@@ -2353,18 +2533,22 @@ var file_ora_cloud_internal_v1_agent_executions_proto_depIdxs = []int32{
 	18, // 15: ora.cloud.internal.v1.ScheduledArtifactManifest.items:type_name -> ora.cloud.internal.v1.ScheduledArtifactItem
 	19, // 16: ora.cloud.internal.v1.ScheduledArtifactManifest.rejections:type_name -> ora.cloud.internal.v1.ScheduledArtifactRejection
 	11, // 17: ora.cloud.internal.v1.DeliverRevisionSpec.prior_revision:type_name -> ora.cloud.internal.v1.PriorRevision
-	22, // 18: ora.cloud.internal.v1.RevisionDelivered.history:type_name -> ora.cloud.internal.v1.StoredObject
-	22, // 19: ora.cloud.internal.v1.RevisionUnchanged.history:type_name -> ora.cloud.internal.v1.StoredObject
-	5,  // 20: ora.cloud.internal.v1.RevisionFailed.reason:type_name -> ora.cloud.internal.v1.RevisionFailureReason
-	22, // 21: ora.cloud.internal.v1.ScheduledArtifactsDelivered.artifacts:type_name -> ora.cloud.internal.v1.StoredObject
-	6,  // 22: ora.cloud.internal.v1.ScheduledArtifactsFailed.reason:type_name -> ora.cloud.internal.v1.ScheduledArtifactsFailureReason
-	30, // 23: ora.cloud.internal.v1.UploadGrant.headers:type_name -> ora.cloud.internal.v1.UploadGrant.HeadersEntry
-	31, // 24: ora.cloud.internal.v1.UploadGrant.expires_at:type_name -> google.protobuf.Timestamp
-	25, // [25:25] is the sub-list for method output_type
-	25, // [25:25] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	22, // 18: ora.cloud.internal.v1.DeliverRevisionSpec.workflow_sessions:type_name -> ora.cloud.internal.v1.WorkflowHistorySession
+	24, // 19: ora.cloud.internal.v1.WorkflowHistoryObject.history:type_name -> ora.cloud.internal.v1.StoredObject
+	24, // 20: ora.cloud.internal.v1.RevisionDelivered.history:type_name -> ora.cloud.internal.v1.StoredObject
+	23, // 21: ora.cloud.internal.v1.RevisionDelivered.workflow_histories:type_name -> ora.cloud.internal.v1.WorkflowHistoryObject
+	24, // 22: ora.cloud.internal.v1.RevisionUnchanged.history:type_name -> ora.cloud.internal.v1.StoredObject
+	23, // 23: ora.cloud.internal.v1.RevisionUnchanged.workflow_histories:type_name -> ora.cloud.internal.v1.WorkflowHistoryObject
+	5,  // 24: ora.cloud.internal.v1.RevisionFailed.reason:type_name -> ora.cloud.internal.v1.RevisionFailureReason
+	24, // 25: ora.cloud.internal.v1.ScheduledArtifactsDelivered.artifacts:type_name -> ora.cloud.internal.v1.StoredObject
+	6,  // 26: ora.cloud.internal.v1.ScheduledArtifactsFailed.reason:type_name -> ora.cloud.internal.v1.ScheduledArtifactsFailureReason
+	32, // 27: ora.cloud.internal.v1.UploadGrant.headers:type_name -> ora.cloud.internal.v1.UploadGrant.HeadersEntry
+	33, // 28: ora.cloud.internal.v1.UploadGrant.expires_at:type_name -> google.protobuf.Timestamp
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_ora_cloud_internal_v1_agent_executions_proto_init() }
@@ -2383,7 +2567,7 @@ func file_ora_cloud_internal_v1_agent_executions_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ora_cloud_internal_v1_agent_executions_proto_rawDesc), len(file_ora_cloud_internal_v1_agent_executions_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

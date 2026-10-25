@@ -4,6 +4,8 @@
 
 `ora/cloud/internal/v1/` is the single field source for `ora.cloud.internal.v1`. Cloud serves all RPCs; Controllers dial out. Consumers pin a repository commit and generate clients without copying proto files.
 
+WorkflowRun Revision delivery adds `workflow_sessions`, fixing each node, attempt, execution identity and history key; the first member matches the existing session anchor. Result `workflow_histories` preserves those ordered identities and object measurements, while `history` describes the run manifest. Empty lists retain the Agent single-session contract. Controllers relay the declaration; Cloud verifies the manifest and every object. Coordinate the Cloud/Controller/Node upgrade before enabling this extension; older Nodes must not claim extended delivery inputs.
+
 Live previews use a separate `PublishThreadPreview` RPC with bounded execution/version replacements and no Ack. `ThreadEvent.history_sequence` links settled records to preview positions. Controller consumers must update generated clients before negotiating the optional path.
 
 | File | Content |

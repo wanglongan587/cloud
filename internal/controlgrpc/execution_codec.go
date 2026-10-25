@@ -273,6 +273,9 @@ func deliveryObject(spec *controlpb.DeliverRevisionSpec) (core.Object, error) {
 	if prior := spec.GetPriorRevision(); prior != nil {
 		out["priorRevision"] = priorObject(prior)
 	}
+	if len(spec.GetWorkflowSessions()) > 0 {
+		out["workflowSessions"] = workflowSessionObjects(spec.GetWorkflowSessions())
+	}
 	return out, nil
 }
 
@@ -281,7 +284,8 @@ func deliveryMessage(o core.Object) *controlpb.DeliverRevisionSpec {
 		SessionExecutionId: o.S("sessionExecutionId"), CheckoutExecutionId: o.S("checkoutExecutionId"), BaseCommit: o.S("baseCommit"),
 		RevisionRef: o.S("revisionRef"), HistoryKey: o.S("historyKey"),
 		GitRepositoryUrl: o.S("gitRepositoryUrl"), DeliveryRef: o.S("deliveryRef"), WorkspaceRef: o.S("workspaceRef"),
-		PriorRevision: priorMessage(o.O("priorRevision")),
+		PriorRevision:    priorMessage(o.O("priorRevision")),
+		WorkflowSessions: workflowSessionMessages(rows(o["workflowSessions"])),
 	}
 }
 
@@ -368,11 +372,17 @@ func resultObject(res *controlpb.ExecutionResult) (core.Object, error) {
 		delivered := outcome.RevisionDelivered
 		out["finalCommit"], out["baseCommit"], out["revisionRef"] = delivered.GetFinalCommit(), delivered.GetBaseCommit(), delivered.GetRevisionRef()
 		out["history"] = storedObject(delivered.GetHistory())
+		if len(delivered.GetWorkflowHistories()) > 0 {
+			out["workflowHistories"] = workflowHistoryObjects(delivered.GetWorkflowHistories())
+		}
 	case *controlpb.ExecutionResult_RevisionUnchanged:
 		out["outcome"] = "revision_unchanged"
 		unchanged := outcome.RevisionUnchanged
 		out["finalCommit"], out["baseCommit"], out["revisionRef"] = unchanged.GetFinalCommit(), unchanged.GetBaseCommit(), unchanged.GetRevisionRef()
 		out["history"] = storedObject(unchanged.GetHistory())
+		if len(unchanged.GetWorkflowHistories()) > 0 {
+			out["workflowHistories"] = workflowHistoryObjects(unchanged.GetWorkflowHistories())
+		}
 	case *controlpb.ExecutionResult_ScheduledArtifactsDelivered:
 		out["outcome"] = "scheduled_artifacts_delivered"
 		artifacts := outcome.ScheduledArtifactsDelivered.GetArtifacts()
@@ -477,9 +487,9 @@ func result(o core.Object) *controlpb.ExecutionResult {
 		}
 		out.Outcome = &controlpb.ExecutionResult_AgentSessionEnded{AgentSessionEnded: ended}
 	case "revision_delivered":
-		out.Outcome = &controlpb.ExecutionResult_RevisionDelivered{RevisionDelivered: &controlpb.RevisionDelivered{FinalCommit: o.S("finalCommit"), BaseCommit: o.S("baseCommit"), RevisionRef: o.S("revisionRef"), History: storedMessage(o.O("history"))}}
+		out.Outcome = &controlpb.ExecutionResult_RevisionDelivered{RevisionDelivered: &controlpb.RevisionDelivered{FinalCommit: o.S("finalCommit"), BaseCommit: o.S("baseCommit"), RevisionRef: o.S("revisionRef"), History: storedMessage(o.O("history")), WorkflowHistories: workflowHistoryMessages(rows(o["workflowHistories"]))}}
 	case "revision_unchanged":
-		out.Outcome = &controlpb.ExecutionResult_RevisionUnchanged{RevisionUnchanged: &controlpb.RevisionUnchanged{FinalCommit: o.S("finalCommit"), BaseCommit: o.S("baseCommit"), RevisionRef: o.S("revisionRef"), History: storedMessage(o.O("history"))}}
+		out.Outcome = &controlpb.ExecutionResult_RevisionUnchanged{RevisionUnchanged: &controlpb.RevisionUnchanged{FinalCommit: o.S("finalCommit"), BaseCommit: o.S("baseCommit"), RevisionRef: o.S("revisionRef"), History: storedMessage(o.O("history")), WorkflowHistories: workflowHistoryMessages(rows(o["workflowHistories"]))}}
 	case "revision_failed":
 		out.Outcome = &controlpb.ExecutionResult_RevisionFailed{RevisionFailed: &controlpb.RevisionFailed{Reason: controlpb.RevisionFailureReason(enum(controlpb.RevisionFailureReason_value, "REVISION_FAILURE_REASON_", o.S("reason")))}}
 	case "scheduled_artifacts_delivered":

@@ -9,6 +9,7 @@
 | `server.go` | `NewSecure` / `NewDevelopment`、身份拦截器、服务注册与 keepalive |
 | `lease.go`、`nodes.go`、`operations.go` | 租约、Node 报告、Workspace operation 与 effect 转换 |
 | `executions.go`、`execution_codec.go` | clone、插件、Agent 会话与 Revision 交付的领取、登记、恢复及存储形状转换 |
+| `workflow_history_codec.go` | WorkflowRun 整次交付的逐节点尝试声明和历史对象测量，保留身份与固定对象键 |
 | `agent_runs.go` | Thread 事件、命令、上传授权和可选的实时预览 |
 | `runtime_control.go` | 控制确认、派发许可与强停 |
 | `signals.go` | 转发 ControlHub 的 Watch 信号，排空时结束流 |

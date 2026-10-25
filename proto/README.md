@@ -4,6 +4,8 @@
 
 `ora/cloud/internal/v1/` 是 `ora.cloud.internal.v1` 的唯一字段来源。Cloud 提供所有 RPC 服务，Controller 拨出连接。消费方锁定本仓库 commit 后生成客户端，不复制 proto 文件。
 
+WorkflowRun 的 Revision 交付增加 `workflow_sessions`：逐项固定节点、尝试、执行身份与历史对象键，首项对应原有会话锚点。结果的 `workflow_histories` 保留同序身份和对象测量，原 `history` 是整次清单；空列表保持 Agent 单会话契约。Controller 只转交，Cloud 核验清单与全部对象。启用此扩展前须协调升级 Cloud/Controller/Node，旧节点不得领取扩展交付输入。
+
 实时预览使用独立 `PublishThreadPreview` RPC，按执行和版本替换有界快照，不参与 Ack；`ThreadEvent.history_sequence` 将已定型记录关联到预览位置。Controller 消费方升级生成代码后才可协商启用该旁路。
 
 | 文件 | 内容 |

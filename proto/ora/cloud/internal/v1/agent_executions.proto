@@ -243,6 +243,25 @@ message DeliverRevisionSpec {
   // The run Workspace's branch, from its clone input. The Node fast-forwards it to the final commit
   // after the delivery ref is pushed; failing to do so never fails the delivery.
   string workspace_ref = 10;
+  // Non-empty only for a WorkflowRun. The anchor session above must be the first member.
+  // Every member belongs to this checkout and must be settled before any snapshot or upload.
+  repeated WorkflowHistorySession workflow_sessions = 11;
+}
+
+// Frozen identity and object location of one established workflow session attempt.
+message WorkflowHistorySession {
+  string node_id = 1;
+  uint32 attempt = 2;
+  string execution_id = 3;
+  string history_key = 4;
+}
+
+// Node-measured history for exactly one declared session; Cloud checks the fixed identity and key.
+message WorkflowHistoryObject {
+  string node_id = 1;
+  uint32 attempt = 2;
+  string execution_id = 3;
+  StoredObject history = 4;
 }
 
 // An object the Node uploaded, as the Node measured it; Cloud verifies it before registering.
@@ -261,6 +280,7 @@ message RevisionDelivered {
   string base_commit = 2;
   string revision_ref = 3;
   StoredObject history = 5;
+  repeated WorkflowHistoryObject workflow_histories = 6;
 }
 
 // The final commit equals the base commit, or the delivery spec's prior_revision final commit (a
@@ -271,6 +291,7 @@ message RevisionUnchanged {
   string base_commit = 2;
   string revision_ref = 3;
   StoredObject history = 4;
+  repeated WorkflowHistoryObject workflow_histories = 5;
 }
 
 enum RevisionFailureReason {
