@@ -1,6 +1,10 @@
 package core
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/google/uuid"
+)
 
 // joinTargets canonicalizes a bounded intent before it is frozen on the link or
 // request. Redemption never takes targets from the accepting client's body.
@@ -15,6 +19,9 @@ func joinTargets(body Object) []string {
 	for _, value := range values {
 		id, ok := value.(string)
 		require(ok && validID(id), 400, "invalid_squad_targets")
+		parsed, err := uuid.Parse(id)
+		require(err == nil, 400, "invalid_squad_targets")
+		id = parsed.String()
 		if !seen[id] {
 			seen[id] = true
 			ids = append(ids, id)

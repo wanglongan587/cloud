@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { Squad } from '@/api/generated.schemas'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import { useCurrentSpace } from '@/features/spaces/current-space'
 import { useSquad, useSquadCommand } from '@/features/squads/api'
 import { SquadEditor } from '@/features/squads/squad-editor'
 import { SquadMembers } from '@/features/squads/squad-members'
 import { SquadAdd } from '@/features/squads/squad-add'
 import { SquadInvites } from '@/features/squads/squad-invites'
+import { squadFailureMessage } from '@/features/squads/squad-feedback'
 
 /** Resolves a stable squad URL against current tenant authority, including archived history. */
 export function SquadDetailPage({ slug }: { slug: string }) {
@@ -23,11 +25,14 @@ function SquadDetail({ tenantId, id, slug }: { tenantId: string; id: string; slu
   const detail = useSquad(tenantId, id)
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
-      <Link to={`/w/${slug}/squads`}>{t('squad.back')}</Link>
+      <PageHeader
+        title={t('squad.title')}
+        actions={<Link to={`/w/${slug}/squads`}>{t('squad.back')}</Link>}
+      />
       {detail.isPending && <p role="status">{t('squad.loading')}</p>}
       {detail.isError && (
         <p role="alert">
-          {t('squad.failed')}{' '}
+          {t(squadFailureMessage(detail.error))}{' '}
           <Button onClick={() => void detail.refetch()}>{t('squad.retry')}</Button>
         </p>
       )}
@@ -39,7 +44,7 @@ function SquadDetail({ tenantId, id, slug }: { tenantId: string; id: string; slu
 function SquadContent({ tenantId, squad }: { tenantId: string; squad: Squad }) {
   const { t } = useTranslation()
   const command = useSquadCommand(tenantId, squad.id, squad.version)
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState<Squad>()
   const [archiving, setArchiving] = useState(false)
   return (
     <>
@@ -56,7 +61,9 @@ function SquadContent({ tenantId, squad }: { tenantId: string; squad: Squad }) {
           </Button>
           {squad.canMaintain && (
             <>
-              <Button onClick={() => setEditing(!editing)}>{t('squad.edit')}</Button>
+              <Button onClick={() => setEditing(editing ? undefined : squad)}>
+                {t('squad.edit')}
+              </Button>
               <Button variant="outline" onClick={() => setArchiving(true)}>
                 {t('squad.archive')}
               </Button>
@@ -71,14 +78,7 @@ function SquadContent({ tenantId, squad }: { tenantId: string; squad: Squad }) {
       )}
       {command.isError && <p role="alert">{t('squad.failure')}</p>}
       {editing && squad.canMaintain && !squad.archivedAt && (
-        <SquadEditor
-          initial={squad}
-          busy={command.isPending}
-          onSave={(value) =>
-            command.mutate({ action: 'edit', ...value }, { onSuccess: () => setEditing(false) })
-          }
-          onCancel={() => setEditing(false)}
-        />
+        <SquadEdit tenantId={tenantId} snapshot={editing} onClose={() => setEditing(undefined)} />
       )}
       <SquadMembers tenantId={tenantId} squad={squad} />
       {squad.canMaintain && !squad.archivedAt && (
@@ -87,6 +87,30 @@ function SquadContent({ tenantId, squad }: { tenantId: string; squad: Squad }) {
       {squad.canInvite && !squad.archivedAt && (
         <SquadInvites tenantId={tenantId} squadId={squad.id} />
       )}
+    </>
+  )
+}
+
+function SquadEdit({
+  tenantId,
+  snapshot,
+  onClose,
+}: {
+  tenantId: string
+  snapshot: Squad
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const command = useSquadCommand(tenantId, snapshot.id, snapshot.version)
+  return (
+    <>
+      <SquadEditor
+        initial={snapshot}
+        busy={command.isPending}
+        onSave={(value) => command.mutate({ action: 'edit', ...value }, { onSuccess: onClose })}
+        onCancel={onClose}
+      />
+      {command.isError && <p role="alert">{t('squad.failure')}</p>}
     </>
   )
 }

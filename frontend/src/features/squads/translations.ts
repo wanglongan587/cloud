@@ -1,6 +1,11 @@
 /** Squad copy separates grouping, maintenance and unavailable automatic execution. */
 export const squadTranslations = {
   'zh-CN': {
+    'squad.forbidden': '当前账号无权读取此工作区的小队。',
+    'squad.notFound': '未找到可见的小队。',
+    'squad.archivedTarget': '已归档，无法批准',
+    'squad.pendingConflict': '你已有目标不同的待审批申请，请先处理原申请。',
+    'squad.originalTargets': '原申请的小队',
     'squad.title': '小队',
     'squad.empty': '还没有小队。创建后可添加工作区成员和智能体。',
     'squad.loading': '正在读取小队…',
@@ -45,6 +50,12 @@ export const squadTranslations = {
     'squad.back': '返回小队列表',
   },
   'en-US': {
+    'squad.forbidden': 'This account cannot read squads in this workspace.',
+    'squad.notFound': 'No visible squad was found.',
+    'squad.archivedTarget': 'Archived; cannot approve',
+    'squad.pendingConflict':
+      'A pending application has different targets. Resolve the original application first.',
+    'squad.originalTargets': 'Original application targets',
     'squad.title': 'Squads',
     'squad.empty': 'No squads yet. Create one to add workspace members and agents.',
     'squad.loading': 'Loading squads…',

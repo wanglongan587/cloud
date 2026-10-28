@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useDecideJoinRequest, type useJoinRequests } from '@/features/members/api'
 import { entryDate } from '@/features/members/browser'
+import type { JoinRequest } from '@/api/generated.schemas'
 
 /** Shows actionable requests separately from decisions, optionally scoped to a share link. */
 export function JoinRequests({
@@ -67,6 +68,7 @@ export function JoinRequests({
             <p className="text-muted-foreground">
               {t('entry.source')} · {row.linkNote || `#${row.linkId.slice(0, 8)}`}
             </p>
+            <RequestTargets targets={row.targetSquads} />
             {row.decidedAt && (
               <p>
                 {t('entry.decidedBy')} · {row.decidedByName || row.decidedBy} ·{' '}
@@ -81,7 +83,10 @@ export function JoinRequests({
                   key={decision}
                   size="sm"
                   variant={decision === 'approve' ? 'default' : 'outline'}
-                  disabled={decide.isPending}
+                  disabled={
+                    decide.isPending ||
+                    (decision === 'approve' && row.targetSquads?.some((target) => target.archived))
+                  }
                   onClick={() => decide.mutate({ id: row.id, version: row.version, decision })}
                 >
                   {t(`entry.${decision}`)}
@@ -96,6 +101,24 @@ export function JoinRequests({
           {t('entry.actionFailed')}
         </p>
       )}
+    </section>
+  )
+}
+
+function RequestTargets({ targets }: { targets: JoinRequest['targetSquads'] }) {
+  const { t } = useTranslation()
+  if (!targets?.length) return null
+  return (
+    <section>
+      <h3>{t('squad.targets')}</h3>
+      <ul>
+        {targets.map((target) => (
+          <li key={target.id}>
+            {target.name}
+            {target.archived ? ` · ${t('squad.archivedTarget')}` : ''}
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

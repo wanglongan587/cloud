@@ -30,8 +30,12 @@ func (s *Store) JoinLinkPreview(ctx context.Context, kind, token string, claims 
 			result["alreadyJoinedTargets"] = !missingJoinTargets(t, row.S("tenantId"), u.S("id"), joinTargets(row))
 		}
 		if kind == "apply" {
-			if pending := t.one("SELECT id FROM tenant_join_requests WHERE tenant_id=$1 AND user_id=$2 AND status='pending'", row.S("tenantId"), u.S("id")); pending != nil {
+			if pending := t.one("SELECT id,target_squad_ids FROM tenant_join_requests WHERE tenant_id=$1 AND user_id=$2 AND status='pending'", row.S("tenantId"), u.S("id")); pending != nil {
 				result["applicationStatus"] = "pending"
+				if jsonText(joinTargets(pending)) != jsonText(joinTargets(row)) {
+					result["applicationStatus"] = "conflict"
+					result["pendingTargetSquads"] = t.list(`SELECT id,name FROM squads WHERE tenant_id=$1 AND id::text IN (SELECT jsonb_array_elements_text($2::jsonb)) ORDER BY id`, row.S("tenantId"), jsonText(joinTargets(pending)))
+				}
 			}
 		}
 		if state != "active" && !result.B("alreadyMember") && result.S("applicationStatus") == "" {

@@ -47,6 +47,26 @@ function space() {
 }
 
 describe('JoinPage', () => {
+  it('shows the original pending targets instead of presenting a different link as already requested', async () => {
+    installSignedInSession()
+    server.use(
+      http.post('/api/v1/join/links/preview', () =>
+        HttpResponse.json({
+          kind: 'apply',
+          state: 'active',
+          applicationStatus: 'conflict',
+          name: 'Team',
+          targetSquads: [{ id: 'new', name: 'New target' }],
+          pendingTargetSquads: [{ id: 'old', name: 'Original target' }],
+        }),
+      ),
+    )
+    renderJoin('apply')
+    expect(await screen.findByRole('alert')).toHaveTextContent('目标不同')
+    expect(await screen.findByText('Original target')).toBeInTheDocument()
+    expect(screen.queryByText('New target')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '提交申请' })).not.toBeInTheDocument()
+  })
   it('requires explicit targeted acceptance even when the user already belongs to the workspace', async () => {
     installSignedInSession()
     server.use(

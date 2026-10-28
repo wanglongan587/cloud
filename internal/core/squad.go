@@ -66,6 +66,7 @@ func squadWrite(t *transaction, r *PublicRequest, uid string) (Object, int) {
 		case strings.HasSuffix(r.Path, "/members"):
 			addSquadMember(t, row, r.Body.S("kind"), r.Body.S("memberId"), r.Body.B("maintainer"), squadText(r.Body.S("responsibility"), 2000), uid, "manual", "")
 		case r.SquadMemberID != "":
+			require(validID(r.SquadMemberID), 404, "not_found")
 			member := t.one("SELECT * FROM squad_members WHERE id=$1 AND squad_id=$2 AND ended_at IS NULL", r.SquadMemberID, r.SquadID)
 			require(member != nil, 404, "not_found")
 			if r.Method == "DELETE" {

@@ -21,10 +21,24 @@ describe('Squad detail authority', () => {
         <SquadDetailPage slug="cloud-dev" />,
         `/w/cloud-dev/squads/${squadId}`,
       )
-      expect(await screen.findByRole('alert')).toHaveTextContent('无法读取小队')
+      expect(await screen.findByRole('alert')).toHaveTextContent('未找到可见的小队')
       expect(screen.queryByText('平台组')).not.toBeInTheDocument()
     },
   )
+  it('distinguishes forbidden access from loading failure', async () => {
+    installCloudSpaceHandlers('member')
+    server.use(
+      http.get('/api/v1/tenants/:tid/squads/:id', () =>
+        HttpResponse.json({ code: 'membership_required' }, { status: 403 }),
+      ),
+    )
+    renderAtRoute(
+      '/w/:workspaceSlug/squads/:squadId',
+      <SquadDetailPage slug="cloud-dev" />,
+      '/w/cloud-dev/squads/hidden',
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent('无权读取')
+  })
   it('retains archived history and hides all mutation controls', async () => {
     installCloudSpaceHandlers('member')
     server.use(

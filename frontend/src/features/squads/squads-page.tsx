@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import { useCurrentSpace } from '@/features/spaces/current-space'
 import { useCreateSquad, useSquads } from '@/features/squads/api'
 import { SquadEditor } from '@/features/squads/squad-editor'
+import { squadFailureMessage } from '@/features/squads/squad-feedback'
 
 /** Projects only the current workspace's real squad records. */
 export function SquadsPage({ slug }: { slug: string }) {
@@ -20,10 +22,10 @@ function SquadList({ tenantId, slug }: { tenantId: string; slug: string }) {
   const [editing, setEditing] = useState(false)
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">{t('squad.title')}</h1>
-        <Button onClick={() => setEditing(true)}>{t('squad.create')}</Button>
-      </div>
+      <PageHeader
+        title={t('squad.title')}
+        actions={<Button onClick={() => setEditing(true)}>{t('squad.create')}</Button>}
+      />
       <p className="text-sm text-muted-foreground">{t('squad.noExecution')}</p>
       {editing && (
         <SquadEditor
@@ -36,7 +38,7 @@ function SquadList({ tenantId, slug }: { tenantId: string; slug: string }) {
       {squads.isPending && <p role="status">{t('squad.loading')}</p>}
       {squads.isError && (
         <p role="alert">
-          {t('squad.failed')}{' '}
+          {t(squadFailureMessage(squads.error))}{' '}
           <Button onClick={() => void squads.refetch()}>{t('squad.retry')}</Button>
         </p>
       )}

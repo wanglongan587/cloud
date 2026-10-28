@@ -27,6 +27,9 @@ func squadSchemas(s obj) {
 		properties(s, name)["invalidatedAt"] = optional(timestamp())
 	}
 	properties(s, "JoinLinkPreview")["alreadyJoinedTargets"] = boolean()
+	properties(s, "JoinLinkPreview")["applicationStatus"] = enumeration("pending", "conflict")
+	properties(s, "JoinLinkPreview")["pendingTargetSquads"] = array(object(obj{"id": uuid(), "name": str()}, "id", "name"))
+	properties(s, "JoinRequest")["targetSquads"] = array(object(obj{"id": uuid(), "name": str(), "archived": boolean()}, "id", "name", "archived"))
 	properties(s, "JoinLinkPreview")["inviterName"] = str()
 	properties(s, "JoinLinkPreview")["targetSquads"] = array(object(obj{"id": uuid(), "name": str()}, "id", "name"))
 }

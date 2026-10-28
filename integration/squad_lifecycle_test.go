@@ -28,6 +28,9 @@ func TestSquadLeaderRetirementAndTenantIsolation(t *testing.T) {
 	_, err = f.store.Pool.Exec("UPDATE space_agents SET status='active' WHERE id=$1", agent)
 	must(t, err)
 	after := f.call("GET", path, nil, "", 200)
+	for _, method := range []string{"PATCH", "DELETE"} {
+		f.call(method, path+"/members/not-a-uuid", core.Object{"version": after.N("version")}, "invalid-"+method, 404)
+	}
 	if after.S("leaderAgentId") != "" || f.scalar("SELECT count(*) FROM squad_members WHERE agent_id=$1 AND ended_at IS NULL", agent) != 0 {
 		t.Fatal("agent reinstallation revived old leader or membership")
 	}
@@ -72,9 +75,24 @@ func TestSquadPendingIntentConflictAndApprovalRollback(t *testing.T) {
 	}
 	r := joinCall(t, f, user, "POST", "/api/v1/join/requests", "request-a", core.Object{"token": joinToken('p')}, 201)
 	joinCall(t, f, user, "POST", "/api/v1/join/requests", "request-b", core.Object{"token": joinToken('q')}, 409)
-	f.call("POST", f.path("/squads/"+a.S("id")+"/archive"), core.Object{"version": a.N("version")}, "archive-request-target", 200)
+	preview := joinCall(t, f, user, "POST", core.JoinLinkPreviewPath, "", core.Object{"kind": "apply", "token": joinToken('q')}, 200)
+	if preview.S("applicationStatus") != "conflict" || len(preview["pendingTargetSquads"].([]any)) != 1 {
+		t.Fatalf("different intent was misrepresented as pending: %v", preview)
+	}
+	list := f.call("GET", f.path("/join-requests"), nil, "", 200)
+	if len(core.Object(list["items"].([]any)[0].(map[string]any))["targetSquads"].([]any)) != 1 {
+		t.Fatal("approver cannot inspect frozen targets")
+	}
+	targetedInvite(t, f, joinToken('z'), a.S("id"))
+	joinCall(t, f, user, "POST", "/api/v1/join/invitations/redeem", "join-before-decision", core.Object{"token": joinToken('z')}, 200)
+	repeated := joinCall(t, f, user, "POST", "/api/v1/join/requests", "request-a-again", core.Object{"token": joinToken('p')}, 201)
+	if repeated.S("id") != r.S("id") {
+		t.Fatal("same intent did not return existing pending request")
+	}
+	current := f.call("GET", f.path("/squads/"+a.S("id")), nil, "", 200)
+	f.call("POST", f.path("/squads/"+a.S("id")+"/archive"), core.Object{"version": current.N("version")}, "archive-request-target", 200)
 	f.call("POST", f.path("/join-requests/"+r.S("id")+"/approve"), core.Object{"version": r.N("version")}, "approve-dead-target", 404)
-	if f.scalar("SELECT count(*) FROM tenant_join_requests WHERE id=$1 AND status='pending'", r.S("id")) != 1 || f.scalar("SELECT count(*) FROM tenant_memberships WHERE tenant_id=$1 AND user_id=$2", f.tid, r.S("userId")) != 0 {
+	if f.scalar("SELECT count(*) FROM tenant_join_requests WHERE id=$1 AND status='pending'", r.S("id")) != 1 || f.scalar("SELECT count(*) FROM squad_members WHERE user_id=$1 AND ended_at IS NULL", r.S("userId")) != 0 {
 		t.Fatal("failed approval changed intent or partially admitted the applicant")
 	}
 	_, err := f.store.Pool.Exec("UPDATE tenant_join_requests SET target_squad_ids='[]' WHERE id=$1", r.S("id"))

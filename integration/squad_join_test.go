@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,7 +25,7 @@ func TestSquadTargetedInvitationIsAtomicAndSeparatesProvenance(t *testing.T) {
 	a, b := createTestSquad(t, f, "A"), createTestSquad(t, f, "B")
 	user, uid := f.addUser(t, "existing", "Existing")
 	token := joinToken('T')
-	targetedInvite(t, f, token, a.S("id"), b.S("id"), a.S("id"))
+	targetedInvite(t, f, token, strings.ToUpper(a.S("id")), b.S("id"), a.S("id"))
 	before := f.scalar("SELECT count(*) FROM membership_join_events WHERE user_id=$1", uid)
 	preview := joinCall(t, f, user, "POST", core.JoinLinkPreviewPath, "", core.Object{"kind": "invite", "token": token}, 200)
 	if !preview.B("alreadyMember") || preview.B("alreadyJoinedTargets") || len(preview["targetSquads"].([]any)) != 2 {

@@ -976,6 +976,7 @@ export type JoinLinkPreviewApplicationStatus = typeof JoinLinkPreviewApplication
 
 export const JoinLinkPreviewApplicationStatus = {
   pending: 'pending',
+  conflict: 'conflict',
 } as const;
 
 export type JoinLinkPreviewKind = typeof JoinLinkPreviewKind[keyof typeof JoinLinkPreviewKind];
@@ -985,6 +986,11 @@ export const JoinLinkPreviewKind = {
   invite: 'invite',
   apply: 'apply',
 } as const;
+
+export type JoinLinkPreviewPendingTargetSquadsItem = {
+  id: string;
+  name: string;
+};
 
 export type JoinLinkPreviewState = typeof JoinLinkPreviewState[keyof typeof JoinLinkPreviewState];
 
@@ -1009,6 +1015,7 @@ export interface JoinLinkPreview {
   inviterName?: string;
   kind: JoinLinkPreviewKind;
   name?: string;
+  pendingTargetSquads?: JoinLinkPreviewPendingTargetSquadsItem[];
   slug?: string;
   state: JoinLinkPreviewState;
   targetSquads?: JoinLinkPreviewTargetSquadsItem[];
@@ -1022,6 +1029,12 @@ export const JoinRequestStatus = {
   approved: 'approved',
   rejected: 'rejected',
 } as const;
+
+export type JoinRequestTargetSquadsItem = {
+  archived: boolean;
+  id: string;
+  name: string;
+};
 
 export interface JoinRequest {
   createdAt: string;
@@ -1038,6 +1051,7 @@ export interface JoinRequest {
   name?: string;
   status: JoinRequestStatus;
   targetSquadIds?: string[];
+  targetSquads?: JoinRequestTargetSquadsItem[];
   tenantId: string;
   userId: string;
   version: number;

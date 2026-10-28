@@ -73,11 +73,11 @@ func requestJoin(t *transaction, token, uid string) Object {
 	requireActiveJoinLink(link)
 	ids := joinTargets(link)
 	requireJoinTargets(t, link.S("tenantId"), ids)
-	require(!activeMember(t, link.S("tenantId"), uid) || missingJoinTargets(t, link.S("tenantId"), uid, ids), 409, "already_member")
 	if old := t.one("SELECT * FROM tenant_join_requests WHERE tenant_id=$1 AND user_id=$2 AND status='pending'", link.S("tenantId"), uid); old != nil {
 		require(jsonText(joinTargets(old)) == jsonText(ids), 409, "join_request_targets_conflict")
 		return old
 	}
+	require(!activeMember(t, link.S("tenantId"), uid) || missingJoinTargets(t, link.S("tenantId"), uid, ids), 409, "already_member")
 	id := newID()
 	t.exec("INSERT INTO tenant_join_requests(id,tenant_id,user_id,link_id,status,target_squad_ids) VALUES($1,$2,$3,$4,'pending',$5)", id, link.S("tenantId"), uid, link.S("id"), jsonText(ids))
 	return t.one("SELECT * FROM tenant_join_requests WHERE id=$1", id)
@@ -107,6 +107,8 @@ func adminJoinRead(t *transaction, r *PublicRequest) Object {
  FROM tenant_join_links l JOIN users c ON c.id=l.created_by WHERE l.tenant_id=$1`, []any{r.TenantID}, "l.id", r)
 	default:
 		return page(t, `SELECT j.id,j.tenant_id,j.user_id,j.link_id,j.status,j.created_at,j.decided_at,j.decided_by,j.version,j.target_squad_ids,u.display_name,
+ COALESCE((SELECT jsonb_agg(jsonb_build_object('id',s.id,'name',s.name,'archived',s.archived_at IS NOT NULL) ORDER BY s.id)
+ FROM squads s WHERE s.tenant_id=j.tenant_id AND s.id::text IN (SELECT jsonb_array_elements_text(j.target_squad_ids))), '[]') AS target_squads,
  l.note AS link_note,d.display_name AS decided_by_name FROM tenant_join_requests j JOIN users u ON u.id=j.user_id
  JOIN tenant_join_links l ON l.id=j.link_id LEFT JOIN users d ON d.id=j.decided_by WHERE j.tenant_id=$1`, []any{r.TenantID}, "j.id", r)
 	}

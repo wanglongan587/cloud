@@ -74,10 +74,15 @@ function JoinEntry({
       pending={pending}
       busy={invitation.isPending || application.isPending || session.status === 'loading'}
       signedIn={session.status === 'signed-in'}
-      blocked={blockedSession(session.status)}
+      blocked={
+        preview.data?.applicationStatus === 'conflict'
+          ? 'squad.pendingConflict'
+          : blockedSession(session.status)
+      }
       name={preview.data?.name}
       targets={preview.data?.targetSquads}
       inviter={preview.data?.inviterName}
+      pendingTargets={preview.data?.pendingTargetSquads}
       onSubmit={submit}
       onRetry={() => {
         invitation.reset()
@@ -114,6 +119,7 @@ function JoinView({
   name,
   targets,
   inviter,
+  pendingTargets,
   onSubmit,
   onRetry,
   onSpaces,
@@ -127,10 +133,11 @@ function JoinView({
   pending: boolean
   busy: boolean
   signedIn: boolean
-  blocked: 'entry.disabledAccount' | 'entry.authFailed' | undefined
+  blocked: 'entry.disabledAccount' | 'entry.authFailed' | 'squad.pendingConflict' | undefined
   name: string | undefined
   targets: JoinLinkPreview['targetSquads']
   inviter: string | undefined
+  pendingTargets: JoinLinkPreview['pendingTargetSquads']
   onSubmit: () => void
   onRetry: () => void
   onSpaces: () => void
@@ -161,6 +168,8 @@ function JoinView({
             signedIn={signedIn}
             targets={targets}
             inviter={inviter}
+            blocked={blocked}
+            pendingTargets={pendingTargets}
           />
           <p className="text-sm leading-relaxed text-muted-foreground">{hint}</p>
         </div>
@@ -204,14 +213,30 @@ function TargetConfirmation({
   signedIn,
   targets,
   inviter,
+  blocked,
+  pendingTargets,
 }: {
   active: boolean
   signedIn: boolean
   targets: JoinLinkPreview['targetSquads']
   inviter: string | undefined
+  blocked: string | undefined
+  pendingTargets: JoinLinkPreview['pendingTargetSquads']
 }) {
   const { t } = useTranslation()
-  if (!active || !signedIn || !targets?.length) return null
+  if (!signedIn) return null
+  if (blocked === 'squad.pendingConflict')
+    return (
+      <section>
+        <h2>{t('squad.originalTargets')}</h2>
+        <ul>
+          {pendingTargets?.map((target) => (
+            <li key={target.id}>{target.name}</li>
+          ))}
+        </ul>
+      </section>
+    )
+  if (!active || !targets?.length) return null
   return (
     <section className="space-y-1">
       <p>
@@ -254,7 +279,10 @@ function ownAdmission(
     joined:
       submitted.invitation ||
       (preview?.alreadyMember === true && preview.alreadyJoinedTargets !== false),
-    pending: submitted.application || preview?.applicationStatus === 'pending',
+    pending:
+      submitted.application ||
+      preview?.applicationStatus === 'pending' ||
+      preview?.applicationStatus === 'conflict',
   }
 }
 
