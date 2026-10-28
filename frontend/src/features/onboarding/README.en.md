@@ -27,3 +27,5 @@ Depends on `features/auth/session`, `features/spaces`, the generated client, `sr
 ## Testing
 
 Real routes with MSW cover creation, redirects, failures, and pending status without contacting a gateway.
+
+Authenticated confirmation shows the inviter and target names. Existing workspace membership still requires explicit acceptance when target relationships are missing. Anonymous views render no targets; direct entry requires all target relationships to be present.

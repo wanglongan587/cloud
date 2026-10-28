@@ -12,7 +12,13 @@ import { useAddHuaweiMember, usePeopleSearch } from '@/features/members/api'
 import { faultCode } from '@/lib/api-client'
 
 /** Searches Tianzhou through Ora and rechecks the selected employee on add. */
-export function HuaweiAdd({ tenantId }: { tenantId: string }) {
+export function HuaweiAdd({
+  tenantId,
+  targetSquadIds,
+}: {
+  tenantId: string
+  targetSquadIds?: string[]
+}) {
   const [keyword, setKeyword] = useState('')
   const [role, setRole] = useState<'admin' | 'member'>('member')
   const people = usePeopleSearch(tenantId, keyword)
@@ -49,7 +55,9 @@ export function HuaweiAdd({ tenantId }: { tenantId: string }) {
           <Button
             size="sm"
             disabled={add.isPending}
-            onClick={() => add.mutate({ person, keyword, role })}
+            onClick={() =>
+              add.mutate({ person, keyword, role, ...(targetSquadIds ? { targetSquadIds } : {}) })
+            }
           >
             添加
           </Button>

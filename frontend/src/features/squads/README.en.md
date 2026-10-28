@@ -2,12 +2,14 @@
 
 [中文](README.md)
 
-Squad management is unavailable. The list and legacy detail URLs explain this state and link to Settings → Members in the current workspace, where users can find real members who accepted invitations. These pages do not read demo squads, members or projects, fabricate counts, presence or execution capabilities, or interpret workspace membership as Squad membership.
+Real squad management reads lists, responsibilities, maintainers, leaders and archival history from current-workspace REST endpoints. Existing people, outside newcomers and Space Agents have separate entry points; tenant membership remains authoritative. Pages never use demo fallback or fabricate counts, presence or execution capability. A configured leader does not enable automatic execution.
 
 | File | Responsibility |
 | --- | --- |
-| `squads-page.tsx` | Unavailable explanation and real member navigation |
-| `squad-detail-page.tsx` | Reuses the explanation for legacy detail URLs without resolving demo identities |
-| `*.test.tsx` | Workspace navigation, legacy details and exclusion of demo records |
+| `api.ts` | Generated clients, pagination, versioned commands and query invalidation |
+| `squads-page.tsx`, `squad-detail-page.tsx` | Real lists, empty/error/archive states and current authority |
+| `squad-editor.tsx`, `squad-members.tsx` | Descriptive forms, maintenance, retained history and explicit leader clearing |
+| `squad-add.tsx`, `squad-invites.tsx` | Existing people/Agent selectors, administrator targeted invitations and directory entry |
+| `translations.ts`, `*.test.tsx` | Bilingual copy and network, creation, archive and authorization regression |
 
-Depends on unavailable and lib/paths; consumed by the route composition root. The members module and backend own real invitations and authorization. This module changes no memberships and starts no work. Navigation always preserves the supplied workspace slug instead of falling back to a demo workspace.
+Depends on spaces for current tenancy, members for admission forms, auth for deployment mode, and UI primitives; consumed by routes. The backend owns authority and transactions. Commands express explicit intent and conflicts refetch. Membership/plugin events, reconnect and focus refresh real state. Only administrators mount external invitation controls. Archived pages retain history and expose no mutations. MSW tests use real endpoint shapes without demo fallback.

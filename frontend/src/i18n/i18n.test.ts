@@ -11,6 +11,8 @@ function bundle(key: string, chinese: string, english: string): TranslationBundl
 
 describe('composeTranslationResources', () => {
   it('includes distinct invitation lifecycle copy in both shipped languages', () => {
+    expect(translationResources['zh-CN']['squad.targets']).toBe('将加入的小队')
+    expect(translationResources['en-US']['squad.targets']).toBe('Squads you will join')
     expect(translationResources['zh-CN']['entry.usedTitle']).toBe('这条邀请链接已被使用')
     expect(translationResources['en-US']['entry.expiredTitle']).toBe('This link has expired')
   })

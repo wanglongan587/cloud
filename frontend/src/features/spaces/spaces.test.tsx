@@ -211,11 +211,13 @@ describe('useSpaceEvents', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const projectsKey = [`/api/v1/tenants/${tenantId}/spaces/${spaceId}/projects`]
     const membersKey = [`/api/v1/tenants/${tenantId}/members`]
+    const squadsKey = [`/api/v1/tenants/${tenantId}/squads`]
     const spacesKey = ['/api/v1/me/spaces']
     const foreignKey = ['/api/v1/tenants/other/spaces']
     const { unmount, invalidated } = renderEvents(queryClient, [
       projectsKey,
       membersKey,
+      squadsKey,
       spacesKey,
       foreignKey,
     ])
@@ -223,6 +225,7 @@ describe('useSpaceEvents', () => {
     await waitFor(() => expect(invalidated(spacesKey)).toBe(true))
     expect(invalidated(projectsKey)).toBe(true)
     expect(invalidated(membersKey)).toBe(true)
+    expect(invalidated(squadsKey)).toBe(true)
     expect(invalidated(foreignKey)).toBe(false)
 
     // Second connection after the 1s backoff; the reconnect refetches the

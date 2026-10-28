@@ -30,3 +30,5 @@ The default roster is separate from administrator-only requests and join links. 
 Notes identify links without binding a recipient. Closing the generation dialog or switching spaces discards plaintext; copying again adds no uses. Unknown historical provenance is never inferred from a redemption. Ordinary members never fetch management history.
 
 MSW verifies real endpoints, strict request bodies, and controls for each deployment mode.
+
+Link-generation and directory forms accept caller-fixed squad targets for server-side freezing/validation; members does not depend on squad pages. Invalidated links display unavailable, with unchanged plaintext lifetime. Squad pages reuse external admission only for administrators.

@@ -26,9 +26,15 @@ export function entryDate(value: string | null | undefined, locale: string): str
 
 /** Computes visible metadata state without ever treating a date alone as proof of validity. */
 export function linkState(
-  row: { expiresAt: string; consumedAt?: string | null; revokedAt?: string | null },
+  row: {
+    expiresAt: string
+    consumedAt?: string | null
+    revokedAt?: string | null
+    invalidatedAt?: string | null
+  },
   now: number,
 ) {
+  if (row.invalidatedAt) return 'unavailable'
   if (row.consumedAt) return 'used'
   if (row.revokedAt) return 'revoked'
   if (new Date(row.expiresAt).getTime() <= now) return 'expired'

@@ -6,6 +6,7 @@ describe('Link metadata presentation', () => {
     const now = Date.parse('2026-10-27T00:00:00Z')
     const expired = { expiresAt: '2026-10-26T00:00:00Z' }
     expect(linkState(expired, now)).toBe('expired')
+    expect(linkState({ ...expired, invalidatedAt: expired.expiresAt }, now)).toBe('unavailable')
     expect(linkState({ ...expired, revokedAt: expired.expiresAt }, now)).toBe('revoked')
     expect(linkState({ ...expired, consumedAt: expired.expiresAt }, now)).toBe('used')
     expect(linkState({ expiresAt: '2026-10-28T00:00:00Z' }, now)).toBe('active')

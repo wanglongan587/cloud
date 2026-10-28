@@ -29,3 +29,5 @@ i18next 实例、语言持久化，以及把各 feature 的文案 bundle 合成�
 - `resources.ts` 是唯一 import feature bundle 的地方。别处 import 会让"一个键属于谁"变得无法静态判断，也会让重复键检查失效。
 - 节点目录存的是**键**（`workflows.node.<kind>.label`）而不是已解析文案：节点的标题在创建时解析一次并写进图数据，切换语言只应该重绘调色板，不应该改写画布上已有的节点。
 - 当前资源只覆盖 workflow 一个 feature，界面其余部分仍是中文硬编码。实例是应用级的，扩大覆盖面只需往 `featureTranslationResources` 加 bundle，调用点不用改。
+
+小队编组、维护权与登录后目标确认的中英文文案由 squads/translations.ts 拥有，组成根统一合并并校验键。

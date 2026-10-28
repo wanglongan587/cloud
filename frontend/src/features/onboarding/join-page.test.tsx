@@ -47,6 +47,27 @@ function space() {
 }
 
 describe('JoinPage', () => {
+  it('requires explicit targeted acceptance even when the user already belongs to the workspace', async () => {
+    installSignedInSession()
+    server.use(
+      http.post('/api/v1/join/links/preview', () =>
+        HttpResponse.json({
+          kind: 'invite',
+          state: 'active',
+          name: 'Team',
+          slug: 'team',
+          alreadyMember: true,
+          alreadyJoinedTargets: false,
+          inviterName: 'Inviter',
+          targetSquads: [{ id: 'squad', name: 'Design squad' }],
+        }),
+      ),
+    )
+    renderJoin('invite')
+    expect(await screen.findByText('Design squad')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '确认加入' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '进入工作区' })).not.toBeInTheDocument()
+  })
   beforeEach(() =>
     server.use(
       http.post('/api/v1/join/links/preview', async ({ request }) => {

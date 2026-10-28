@@ -79,11 +79,17 @@ export function usePeopleSearch(tenantId: string, keyword: string) {
 export function useAddHuaweiMember(tenantId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { person: DirectoryPerson; keyword: string; role: 'admin' | 'member' }) =>
+    mutationFn: (input: {
+      person: DirectoryPerson
+      keyword: string
+      role: 'admin' | 'member'
+      targetSquadIds?: string[]
+    }) =>
       postApiV1TenantsTidMembersHuawei(tenantId, {
         keyword: input.keyword,
         globalUserId: input.person.globalUserId,
         role: input.role,
+        ...(input.targetSquadIds ? { targetSquadIds: input.targetSquadIds } : {}),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: memberKey(tenantId) })
@@ -105,7 +111,7 @@ export function useCreateInvitation(tenantId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     gcTime: 0,
-    mutationFn: (input: { token: string; note: string }) =>
+    mutationFn: (input: { token: string; note: string; targetSquadIds?: string[] }) =>
       postApiV1TenantsTidInvitations(tenantId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: invitationKey(tenantId) })
@@ -118,7 +124,7 @@ export function useCreateJoinLink(tenantId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     gcTime: 0,
-    mutationFn: (input: { token: string; note: string }) =>
+    mutationFn: (input: { token: string; note: string; targetSquadIds?: string[] }) =>
       postApiV1TenantsTidJoinLinks(tenantId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: linkKey(tenantId) })

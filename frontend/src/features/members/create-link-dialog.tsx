@@ -11,10 +11,12 @@ function useCreateLinkState({
   tenantId,
   kind,
   onClose,
+  targetSquadIds,
 }: {
   tenantId: string
   kind: 'invite' | 'apply'
   onClose: () => void
+  targetSquadIds?: string[]
 }) {
   const { t, i18n } = useTranslation()
   const invitation = useCreateInvitation(tenantId)
@@ -32,7 +34,7 @@ function useCreateLinkState({
   function generate() {
     const token = newJoinToken()
     mutation.mutate(
-      { token, note },
+      { token, note, ...(targetSquadIds ? { targetSquadIds } : {}) },
       { onSuccess: (row) => setCreated({ url: joinUrl(kind, token), expiresAt: row.expiresAt }) },
     )
   }

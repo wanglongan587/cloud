@@ -76,6 +76,8 @@ function JoinEntry({
       signedIn={session.status === 'signed-in'}
       blocked={blockedSession(session.status)}
       name={preview.data?.name}
+      targets={preview.data?.targetSquads}
+      inviter={preview.data?.inviterName}
       onSubmit={submit}
       onRetry={() => {
         invitation.reset()
@@ -110,6 +112,8 @@ function JoinView({
   signedIn,
   blocked,
   name,
+  targets,
+  inviter,
   onSubmit,
   onRetry,
   onSpaces,
@@ -125,6 +129,8 @@ function JoinView({
   signedIn: boolean
   blocked: 'entry.disabledAccount' | 'entry.authFailed' | undefined
   name: string | undefined
+  targets: JoinLinkPreview['targetSquads']
+  inviter: string | undefined
   onSubmit: () => void
   onRetry: () => void
   onSpaces: () => void
@@ -150,6 +156,12 @@ function JoinView({
           <p className="text-xs text-muted-foreground">Ora · {t(`entry.${kind}`)}</p>
           <h1 className="text-xl font-semibold">{title}</h1>
           {active && name && !joined && <p className="font-medium">{name}</p>}
+          <TargetConfirmation
+            active={active}
+            signedIn={signedIn}
+            targets={targets}
+            inviter={inviter}
+          />
           <p className="text-sm leading-relaxed text-muted-foreground">{hint}</p>
         </div>
         {blocked && (
@@ -187,6 +199,35 @@ function previewState(preview: ReturnType<typeof useJoinPreview>, token: string,
   }
 }
 
+function TargetConfirmation({
+  active,
+  signedIn,
+  targets,
+  inviter,
+}: {
+  active: boolean
+  signedIn: boolean
+  targets: JoinLinkPreview['targetSquads']
+  inviter: string | undefined
+}) {
+  const { t } = useTranslation()
+  if (!active || !signedIn || !targets?.length) return null
+  return (
+    <section className="space-y-1">
+      <p>
+        {t('squad.inviter')} · {inviter}
+      </p>
+      <h2>{t('squad.targets')}</h2>
+      <ul>
+        {targets.map((target) => (
+          <li key={target.id}>{target.name}</li>
+        ))}
+      </ul>
+      <p>{t('squad.ordinaryRole')}</p>
+    </section>
+  )
+}
+
 function canSubmit(view: {
   checking: boolean
   active: boolean
@@ -210,7 +251,9 @@ function ownAdmission(
 ) {
   if (session.status !== 'signed-in') return { joined: false, pending: false }
   return {
-    joined: submitted.invitation || preview?.alreadyMember === true,
+    joined:
+      submitted.invitation ||
+      (preview?.alreadyMember === true && preview.alreadyJoinedTargets !== false),
     pending: submitted.application || preview?.applicationStatus === 'pending',
   }
 }

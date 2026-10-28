@@ -130,6 +130,12 @@ function invalidateForEvent(
   spaceId: string,
   queryClient: QueryClient,
 ): void {
+  if (event.type === 'space.member_updated' || event.type === 'space.plugins_updated') {
+    void queryClient.invalidateQueries({ queryKey: [`/api/v1/tenants/${tenantId}/squads`] })
+    void queryClient.invalidateQueries({ queryKey: [`/api/v1/tenants/${tenantId}/squad-agents`] })
+    void queryClient.invalidateQueries({ queryKey: [`/api/v1/tenants/${tenantId}/invitations`] })
+    void queryClient.invalidateQueries({ queryKey: [`/api/v1/tenants/${tenantId}/join-links`] })
+  }
   if (event.type === 'issue_run.thread_appended' || event.type === 'issue_run.thread_changed') {
     invalidateForThreadEvent(event, tenantId, queryClient)
   } else if (event.type === 'issue.conversation_changed' && event.issueId) {

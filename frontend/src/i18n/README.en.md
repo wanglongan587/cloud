@@ -46,3 +46,5 @@ infrastructure depend back on business implementations.
   interface is still hardcoded Chinese. The instance is application-wide, so
   widening the coverage is a matter of adding bundles to
   `featureTranslationResources` — no call site changes.
+
+squads/translations.ts owns bilingual grouping, maintenance and authenticated target-confirmation copy, composed and key-validated at the root.
