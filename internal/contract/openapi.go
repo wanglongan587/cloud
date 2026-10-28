@@ -91,6 +91,7 @@ func Document() map[string]any {
 	s["JoinLink"] = object(obj{"id": uuid(), "tenantId": uuid(), "createdBy": uuid(), "createdAt": timestamp(), "expiresAt": timestamp(), "revokedAt": optional(timestamp()), "version": number()}, "id", "tenantId", "createdBy", "createdAt", "expiresAt", "version")
 	s["JoinRequest"] = object(obj{"id": uuid(), "tenantId": uuid(), "userId": uuid(), "linkId": uuid(), "status": enumeration("pending", "approved", "rejected"), "createdAt": timestamp(), "decidedAt": optional(timestamp()), "decidedBy": optional(uuid()), "version": number(), "name": str(), "displayName": str()}, "id", "tenantId", "userId", "linkId", "status", "createdAt", "version")
 	joinManagementSchemas(s)
+	squadSchemas(s)
 	// issue_run.thread_appended / issue_run.thread_changed address one agent run's Thread (Thread
 	// D5): issueId and runId name it and lastSeq is only a hint — the Thread GET alone moves a
 	// client's cursor. Every other event omits the three fields.
@@ -693,6 +694,9 @@ func pathParamSchema(name string) obj {
 
 // tag groups each operation into the OpenAPI tag module the generated client splits on.
 func tag(r router.Route) string {
+	if strings.Contains(r.Path, "/squads") || strings.HasSuffix(r.Path, "/squad-agents") {
+		return "squads"
+	}
 	switch {
 	case strings.HasPrefix(r.Path, "/internal/"):
 		return "internal"
@@ -729,6 +733,9 @@ func snapshotFormPath(path string) bool {
 }
 
 func isList(r router.Route) bool {
+	if strings.HasSuffix(r.Path, "/squads") || strings.HasSuffix(r.Path, "/squad-agents") {
+		return r.Method == "GET"
+	}
 	if strings.HasSuffix(r.Path, "/join-history") {
 		return r.Method == "GET"
 	}
@@ -742,6 +749,9 @@ func isList(r router.Route) bool {
 }
 
 func responseSchema(r router.Route) (schema obj, status string) {
+	if strings.Contains(r.Path, "/squads") || strings.HasSuffix(r.Path, "/squad-agents") {
+		return squadResponse(r)
+	}
 	if r.Path == core.JoinLinkPreviewPath {
 		return ref("JoinLinkPreview"), "200"
 	}
@@ -1136,6 +1146,9 @@ func responseSchema(r router.Route) (schema obj, status string) {
 }
 
 func optionalField(name string, r router.Route) bool {
+	if name == "targetSquadIds" || name == "instructions" || name == "responsibility" || name == "maintainer" || name == "clearLeader" {
+		return true
+	}
 	if name == "note" {
 		return true
 	}
@@ -1187,6 +1200,19 @@ func optionalField(name string, r router.Route) bool {
 }
 
 func inputSchema(name string, r router.Route) obj {
+	if name == "targetSquadIds" {
+		return obj{"type": "array", "items": uuid(), "maxItems": 20}
+	}
+	if strings.Contains(r.Path, "/squads") {
+		switch name {
+		case "maintainer", "clearLeader":
+			return boolean()
+		case "kind":
+			return enumeration("user", "agent")
+		case "agentId":
+			return str()
+		}
+	}
 	if name == "note" {
 		return obj{"type": "string", "maxLength": 200}
 	}

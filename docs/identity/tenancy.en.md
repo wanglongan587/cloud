@@ -70,8 +70,7 @@ database stores only its SHA-256 digest, and the creator assembles the share URL
 - `POST /api/v1/join/links/preview` performs read-only inspection. Gateway enforces same-origin and rate limits; Cloud still verifies the gateway service. Anonymous responses contain only kind and state. Verified users may receive their own membership/pending status and workspace confirmation. Inspection never provisions identity or consumes tokens; `params.reason` distinguishes used, expired, revoked and unavailable without changing the redemption error code.
 - Existing active members accepting ordinary invitations receive their membership without consuming the invitation or changing roles. Disabled members still need valid admission. Submission revalidates transactionally after inspection.
 - Link notes do not bind a recipient. Administrators read creator/consumer metadata and application counts. New/restored membership appends `membership_join_events` atomically. `GET /tenants/:tid/members/:uid/join-history` is administrator-only; unproven historical provenance remains unknown rather than inferred from old redemptions.
-- An existing member who applies again gets `409 already_member`; a person has at most one pending
-  application.
+- An existing member with no missing target relationships gets `409 already_member`; one pending request is retained per person, and different targets conflict. See [Squads and targeted joining](squads.en.md) for admission and revocation boundaries.
 - Redeeming and applying happen before the user is a member, so their idempotency records are kept
   per user (`join_idempotency_records`). Users see their own applications through
   `GET /api/v1/me/join-requests`.
@@ -129,7 +128,7 @@ administrators may use it; see [Runtime control](../runtime/runtime-control.en.m
 
 ## Related decisions
 
-- [Member entry provenance and private link preview](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20261027-member-entry-provenance-and-link-preview.md) (approved): this implementation provides non-consuming ordinary-invitation no-ops, read-only preview, and atomic provenance for real membership transitions. Targeted squads and issuer-revocation policy belong to the subsequent implementation; ordinary-link preview does not establish those guarantees.
+- [Member entry provenance and private link preview](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20261027-member-entry-provenance-and-link-preview.md): targeted joining shares preview, no-op and provenance transaction boundaries; ADR status and evidence remain maintained in specs.
 
 - [Each visible collaboration space corresponds to one tenant, authorized by tenant membership](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20260923-one-space-per-tenant.md)
 - [Signed-in users provision tenants themselves; the tenant becomes the implicit container of the space](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/0-self-serve-tenant-provisioning.md)

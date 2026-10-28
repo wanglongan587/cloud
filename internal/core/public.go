@@ -13,6 +13,7 @@ func itoa(n int) string { return strconv.Itoa(n) }
 
 // PublicRequest is populated only after service and final-user credentials are verified.
 type PublicRequest struct {
+	SquadID, SquadMemberID                                                                                                                                                                                                                                                                                                               string
 	Method, Path, TenantID, ProjectID, WorkspaceID, SpaceID, OperationID, UserID, IssueID, CommentID, ConversationMessageID, LabelID, StatusID, ViewID, RunID, ContextRefID, InteractionID, WorkflowID, SnapshotID, FormRef, InvitationID, JoinLinkID, JoinRequestID, ScheduledTaskID, ArtifactIndex, Key, After, Before, Query, GroupBy string
 	// FormIssueID is the optional `issueId` query parameter of the form-descriptor route. It is
 	// deliberately its own field rather than a fallback into IssueID: IssueID drives dispatch in both
@@ -158,16 +159,23 @@ func (s *Store) Public(ctx context.Context, r *PublicRequest) (Object, int, erro
 		switch {
 		case strings.Contains(r.Path, "/git-credentials"):
 			out, status = gitCredentialsPublic(t, r, uid)
+		case strings.Contains(r.Path, "/squads"):
+			out, status = squadWrite(t, r, uid)
+			events = append(events, SpaceEvent{Type: "space.member_updated", SpaceID: soleSpace(t, r.TenantID).S("id")})
 		case r.ProjectID != "" && strings.Contains(r.Path, "/repository"):
 			out, status = repositoryPublic(t, r, uid)
 		case strings.Contains(r.Path, "/invitations") || strings.Contains(r.Path, "/join-links") || strings.Contains(r.Path, "/join-requests"):
-			out, status = adminJoinWrite(t, r, uid)
-			if r.JoinRequestID != "" && strings.HasSuffix(r.Path, "/approve") {
+			var changed bool
+			out, status, changed = adminJoinWrite(t, r, uid)
+			if changed {
 				events = append(events, SpaceEvent{Type: "space.member_updated", SpaceID: soleSpace(t, r.TenantID).S("id")})
 			}
 		case strings.HasSuffix(r.Path, "/members/huawei"):
-			out = addHuaweiMember(t, r, uid)
-			events = append(events, SpaceEvent{Type: "space.member_updated", SpaceID: soleSpace(t, r.TenantID).S("id")})
+			var changed bool
+			out, changed = addHuaweiMember(t, r, uid)
+			if changed {
+				events = append(events, SpaceEvent{Type: "space.member_updated", SpaceID: soleSpace(t, r.TenantID).S("id")})
+			}
 		case r.SpaceID != "" && strings.HasSuffix(r.Path, "/plugins") && r.Method == "POST":
 			out = installSpacePlugin(t, r, uid)
 			events = append(events, SpaceEvent{Type: "space.plugins_updated", SpaceID: r.SpaceID})
@@ -514,6 +522,9 @@ func window(t *transaction, q string, args []any, r *PublicRequest) Object {
 }
 
 func readPublic(t *transaction, r *PublicRequest, uid string, scheduledTaskAcceptanceEnabled bool) Object {
+	if strings.Contains(r.Path, "/squads") || strings.HasSuffix(r.Path, "/squad-agents") {
+		return squadRead(t, r, uid)
+	}
 	if strings.Contains(r.Path, "/scheduled-tasks") {
 		return scheduledTaskPublicRead(t, r, uid, scheduledTaskAcceptanceEnabled)
 	}

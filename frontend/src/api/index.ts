@@ -8,6 +8,7 @@ export * from './projects/projects';
 export * from './repository/repository';
 export * from './scheduled-tasks/scheduled-tasks';
 export * from './spaces/spaces';
+export * from './squads/squads';
 export * from './tenants/tenants';
 export * from './workflows/workflows';
 export * from './workspaces/workspaces';

@@ -664,9 +664,12 @@ export interface Invitation {
   createdByName?: string;
   expiresAt: string;
   id: string;
+  /** @nullable */
+  invalidatedAt?: string | null;
   note?: string;
   /** @nullable */
   revokedAt?: string | null;
+  targetSquadIds?: string[];
   tenantId: string;
   version: number;
 }
@@ -957,10 +960,13 @@ export interface JoinLink {
   createdByName?: string;
   expiresAt: string;
   id: string;
+  /** @nullable */
+  invalidatedAt?: string | null;
   note?: string;
   pendingCount?: number;
   /** @nullable */
   revokedAt?: string | null;
+  targetSquadIds?: string[];
   tenantId: string;
   version: number;
 }
@@ -991,13 +997,21 @@ export const JoinLinkPreviewState = {
   unavailable: 'unavailable',
 } as const;
 
+export type JoinLinkPreviewTargetSquadsItem = {
+  id: string;
+  name: string;
+};
+
 export interface JoinLinkPreview {
+  alreadyJoinedTargets?: boolean;
   alreadyMember?: boolean;
   applicationStatus?: JoinLinkPreviewApplicationStatus;
+  inviterName?: string;
   kind: JoinLinkPreviewKind;
   name?: string;
   slug?: string;
   state: JoinLinkPreviewState;
+  targetSquads?: JoinLinkPreviewTargetSquadsItem[];
 }
 
 export type JoinRequestStatus = typeof JoinRequestStatus[keyof typeof JoinRequestStatus];
@@ -1023,6 +1037,7 @@ export interface JoinRequest {
   linkNote?: string;
   name?: string;
   status: JoinRequestStatus;
+  targetSquadIds?: string[];
   tenantId: string;
   userId: string;
   version: number;
@@ -2449,6 +2464,69 @@ export interface SpacePluginList {
   items: SpacePlugin[];
 }
 
+export interface Squad {
+  agentCount?: number;
+  /** @nullable */
+  archivedAt: string | null;
+  canInvite?: boolean;
+  canMaintain?: boolean;
+  createdAt: string;
+  createdBy: string;
+  description: string;
+  executionAvailable?: boolean;
+  humanCount?: number;
+  id: string;
+  instructions: string;
+  /** @nullable */
+  leaderAgentId: string | null;
+  name: string;
+  spaceId: string;
+  tenantId: string;
+  updatedAt: string;
+  version: number;
+}
+
+export interface SquadAgent {
+  displayName: string;
+  id: string;
+  pluginId: string;
+  status: string;
+}
+
+export type SquadMemberKind = typeof SquadMemberKind[keyof typeof SquadMemberKind];
+
+
+export const SquadMemberKind = {
+  user: 'user',
+  agent: 'agent',
+} as const;
+
+export interface SquadMember {
+  /** @nullable */
+  agentId: string | null;
+  displayName: string;
+  /** @nullable */
+  endedAt: string | null;
+  /** @nullable */
+  endedReason: string | null;
+  id: string;
+  joinedAt: string;
+  joinedBy: string;
+  kind: SquadMemberKind;
+  maintainer: boolean;
+  /** @nullable */
+  pluginId?: string | null;
+  responsibility: string;
+  /** @nullable */
+  sourceId: string | null;
+  sourceKind: string;
+  squadId: string;
+  tenantId: string;
+  /** @nullable */
+  userId: string | null;
+  version: number;
+}
+
 export interface TaskAgentReadiness {
   agentId: string;
   /** @nullable */
@@ -3456,6 +3534,8 @@ export type GetApiV1TenantsTidInvitations200 = {
 export type PostApiV1TenantsTidInvitationsBody = {
   /** @maxLength 200 */
   note?: string;
+  /** @maxItems 20 */
+  targetSquadIds?: string[];
   token: string;
 };
 
@@ -4141,6 +4221,8 @@ export type GetApiV1TenantsTidJoinLinks200 = {
 export type PostApiV1TenantsTidJoinLinksBody = {
   /** @maxLength 200 */
   note?: string;
+  /** @maxItems 20 */
+  targetSquadIds?: string[];
   token: string;
 };
 
@@ -4243,6 +4325,8 @@ export type PostApiV1TenantsTidMembersHuaweiBody = {
   globalUserId: string;
   keyword: string;
   role?: PostApiV1TenantsTidMembersHuaweiBodyRole;
+  /** @maxItems 20 */
+  targetSquadIds?: string[];
 };
 
 export type PutApiV1TenantsTidMembersUidBodyRole = typeof PutApiV1TenantsTidMembersUidBodyRole[keyof typeof PutApiV1TenantsTidMembersUidBodyRole];
@@ -4621,6 +4705,117 @@ export type PostApiV1TenantsTidSpacesSpaceIdProjects202 = {
   operation: Operation;
   resource: Project;
   workspace: Workspace;
+};
+
+export type GetApiV1TenantsTidSquadAgentsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * Exclusive UUID cursor; Agent sessions use descending (createdAt, id), other lists use ascending stable ordering.
+ */
+after?: string;
+};
+
+export type GetApiV1TenantsTidSquadAgents200 = {
+  items: SquadAgent[];
+  nextCursor: string;
+};
+
+export type GetApiV1TenantsTidSquadsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * Exclusive UUID cursor; Agent sessions use descending (createdAt, id), other lists use ascending stable ordering.
+ */
+after?: string;
+};
+
+export type GetApiV1TenantsTidSquads200 = {
+  items: Squad[];
+  nextCursor: string;
+};
+
+export type PostApiV1TenantsTidSquadsBody = {
+  description?: string;
+  instructions?: string;
+  name: string;
+};
+
+export type PatchApiV1TenantsTidSquadsSquadIdBody = {
+  description?: string;
+  instructions?: string;
+  name: string;
+  /** @minimum 0 */
+  version: number;
+};
+
+export type PostApiV1TenantsTidSquadsSquadIdArchiveBody = {
+  /** @minimum 0 */
+  version: number;
+};
+
+export type PostApiV1TenantsTidSquadsSquadIdLeaderBody = {
+  agentId: string;
+  /** @minimum 0 */
+  version: number;
+};
+
+export type PostApiV1TenantsTidSquadsSquadIdLeaveBody = {
+  /** @minimum 0 */
+  version: number;
+};
+
+export type GetApiV1TenantsTidSquadsSquadIdMembersParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * Exclusive UUID cursor; Agent sessions use descending (createdAt, id), other lists use ascending stable ordering.
+ */
+after?: string;
+};
+
+export type GetApiV1TenantsTidSquadsSquadIdMembers200 = {
+  items: SquadMember[];
+  nextCursor: string;
+};
+
+export type PostApiV1TenantsTidSquadsSquadIdMembersBodyKind = typeof PostApiV1TenantsTidSquadsSquadIdMembersBodyKind[keyof typeof PostApiV1TenantsTidSquadsSquadIdMembersBodyKind];
+
+
+export const PostApiV1TenantsTidSquadsSquadIdMembersBodyKind = {
+  user: 'user',
+  agent: 'agent',
+} as const;
+
+export type PostApiV1TenantsTidSquadsSquadIdMembersBody = {
+  kind: PostApiV1TenantsTidSquadsSquadIdMembersBodyKind;
+  maintainer?: boolean;
+  memberId: string;
+  responsibility?: string;
+  /** @minimum 0 */
+  version: number;
+};
+
+export type DeleteApiV1TenantsTidSquadsSquadIdMembersSquadMemberIdBody = {
+  clearLeader?: boolean;
+  /** @minimum 0 */
+  version: number;
+};
+
+export type PatchApiV1TenantsTidSquadsSquadIdMembersSquadMemberIdBody = {
+  maintainer?: boolean;
+  responsibility?: string;
+  /** @minimum 0 */
+  version: number;
 };
 
 export type GetApiV1TenantsTidWorkflowsParams = {

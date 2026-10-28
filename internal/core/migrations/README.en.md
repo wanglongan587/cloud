@@ -6,10 +6,11 @@ SQL is embedded in the binary through `embed.FS` in `core/store.go`. `Store.Migr
 
 ## File index
 
-There are currently 74 SQL files.
+There are currently 76 SQL files.
 
 | SQL file | Schema change |
 |---|---|
+| [0074_squad_targeted_joining.sql](0074_squad_targeted_joining.sql) | Squads, typed relationships, frozen targets, permanent invalidation and revocation/archive triggers; requires stopping every old writer before activation |
 | [0001_core.sql](0001_core.sql) | Base domain tables |
 | [0002_aggregate_guards.sql](0002_aggregate_guards.sql) | Aggregate ownership constraints |
 | [0003_resource_versions.sql](0003_resource_versions.sql) | Resource versions |

@@ -23,7 +23,9 @@ func (s *Store) AuthorizeTenantAdmin(ctx context.Context, tid string, claims *Cl
 	return err
 }
 
-func addHuaweiMember(t *transaction, r *PublicRequest, actor string) Object {
+func addHuaweiMember(t *transaction, r *PublicRequest, actor string) (Object, bool) {
+	ids := joinTargets(r.Body)
+	requireJoinTargets(t, r.TenantID, ids)
 	require(r.Person != nil && r.Person.Employed, 400, "person_not_employed")
 	globalID := canonicalGlobalID(r.Person.GlobalUserID)
 	require(globalID != "" && globalID == canonicalGlobalID(r.Body.S("globalUserId")), 400, "invalid_person")
@@ -46,5 +48,6 @@ func addHuaweiMember(t *transaction, r *PublicRequest, actor string) Object {
 	if changed {
 		recordMemberJoin(t, r.TenantID, u.S("id"), "directory", actor, "", "")
 	}
-	return Object{"tenantId": r.TenantID, "userId": u.S("id"), "role": member.S("role"), "status": member.S("status"), "version": member.N("version"), "displayName": u.S("displayName")}
+	groupChanged := addJoinTargets(t, r.TenantID, u.S("id"), actor, "directory", "", ids)
+	return Object{"tenantId": r.TenantID, "userId": u.S("id"), "role": member.S("role"), "status": member.S("status"), "version": member.N("version"), "displayName": u.S("displayName")}, changed || groupChanged
 }

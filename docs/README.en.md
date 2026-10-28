@@ -28,6 +28,7 @@ package live in that directory's `README.md`; the authoritative source for busin
 - [Internal credentials and service trust](identity/authentication.en.md): dual JWTs, the Controller's mTLS identity, from credential to user
 - [Gateway](identity/gateway.en.md): external login, browser sessions, the proxy, login providers
 - [Users, tenants and members](identity/tenancy.en.md): tenants and Spaces, the two ways to join, member management
+- [Squads and targeted joining](identity/squads.en.md): grouping, maintenance, frozen targets, revocation and stopped-writer upgrades
 
 **Runtime**
 

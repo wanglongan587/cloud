@@ -127,6 +127,18 @@ func Routes() []Route {
 		{"POST", "/api/v1/join/requests", "", []string{"token"}},
 		{"POST", "/api/v1/tenants", "", []string{"name", "slug"}},
 		{"GET", "/api/v1/tenants/:tid/members", "", nil},
+		{"GET", "/api/v1/tenants/:tid/squads", "", nil},
+		{"GET", "/api/v1/tenants/:tid/squad-agents", "", nil},
+		{"POST", "/api/v1/tenants/:tid/squads", "", []string{"name", "description", "instructions"}},
+		{"GET", "/api/v1/tenants/:tid/squads/:squadId", "", nil},
+		{"PATCH", "/api/v1/tenants/:tid/squads/:squadId", "", []string{"version", "name", "description", "instructions"}},
+		{"POST", "/api/v1/tenants/:tid/squads/:squadId/archive", "", []string{"version"}},
+		{"POST", "/api/v1/tenants/:tid/squads/:squadId/leave", "", []string{"version"}},
+		{"POST", "/api/v1/tenants/:tid/squads/:squadId/leader", "", []string{"version", "agentId"}},
+		{"GET", "/api/v1/tenants/:tid/squads/:squadId/members", "", nil},
+		{"POST", "/api/v1/tenants/:tid/squads/:squadId/members", "", []string{"version", "kind", "memberId", "maintainer", "responsibility"}},
+		{"PATCH", "/api/v1/tenants/:tid/squads/:squadId/members/:squadMemberId", "", []string{"version", "maintainer", "responsibility"}},
+		{"DELETE", "/api/v1/tenants/:tid/squads/:squadId/members/:squadMemberId", "", []string{"version", "clearLeader"}},
 		{"PUT", "/api/v1/tenants/:tid/members/:uid", "", []string{"role", "status", "version"}},
 		{"GET", "/api/v1/tenants/:tid/collaboration/targets", "", nil},
 		{"GET", "/api/v1/tenants/:tid/collaboration/forms/:formRef", "", nil},
@@ -219,12 +231,12 @@ func Routes() []Route {
 		{"POST", "/api/v1/tenants/:tid/issues/:iid/collaboration/assist", "", []string{"targetId", "values"}},
 		{"POST", "/api/v1/tenants/:tid/issues/:iid/interactions/:ixid/confirm", "", []string{"values", "contextRefs"}},
 		{"GET", "/api/v1/tenants/:tid/people", "", nil},
-		{"POST", "/api/v1/tenants/:tid/members/huawei", "", []string{"keyword", "globalUserId", "role"}},
+		{"POST", "/api/v1/tenants/:tid/members/huawei", "", []string{"keyword", "globalUserId", "role", "targetSquadIds"}},
 		{"GET", "/api/v1/tenants/:tid/invitations", "", nil},
-		{"POST", "/api/v1/tenants/:tid/invitations", "", []string{"token", "note"}},
+		{"POST", "/api/v1/tenants/:tid/invitations", "", []string{"token", "note", "targetSquadIds"}},
 		{"DELETE", "/api/v1/tenants/:tid/invitations/:iid", "", []string{"version"}},
 		{"GET", "/api/v1/tenants/:tid/join-links", "", nil},
-		{"POST", "/api/v1/tenants/:tid/join-links", "", []string{"token", "note"}},
+		{"POST", "/api/v1/tenants/:tid/join-links", "", []string{"token", "note", "targetSquadIds"}},
 		{"DELETE", "/api/v1/tenants/:tid/join-links/:lid", "", []string{"version"}},
 		{"GET", "/api/v1/tenants/:tid/join-requests", "", nil},
 		{"POST", "/api/v1/tenants/:tid/join-requests/:rid/approve", "", []string{"version"}},
@@ -492,6 +504,7 @@ func newRouter(store *core.Store, auth *core.Authenticator, log *zap.Logger, leg
 					}
 				}
 				req := &core.PublicRequest{Method: c.Request.Method, Path: c.Request.URL.Path, TenantID: c.Param("tid"), ProjectID: c.Param("pid"), WorkspaceID: c.Param("wid"), SpaceID: c.Param("spaceId"), OperationID: c.Param("oid"), UserID: c.Param("uid"), IssueID: c.Param("iid"), CommentID: c.Param("cid"), ConversationMessageID: c.Param("mid"), LabelID: c.Param("lid"), StatusID: c.Param("sid"), ViewID: c.Param("vid"), RunID: c.Param("rid"), ContextRefID: c.Param("crid"), InteractionID: c.Param("ixid"), WorkflowID: c.Param("wfid"), SnapshotID: c.Param("snapshotId"), FormRef: c.Param("formRef"), FormIssueID: c.Query("issueId"), ModelConnectionID: c.Param("mcid"), SlotName: c.Param("slot"), GitCredentialID: c.Param("gcid"), RepositoryOperationID: c.Param("roid"), InvitationID: c.Param("iid"), JoinLinkID: c.Param("lid"), JoinRequestID: c.Param("rid"), ScheduledTaskID: c.Param("stid"), ArtifactIndex: c.Param("aidx"), Key: c.GetHeader("Idempotency-Key"), SessionProjectID: c.Query("projectId"), SessionStatus: c.Query("status"), SessionAgent: c.Query("agent"), SessionFrom: c.Query("from"), SessionTo: c.Query("to"), Limit: limit, After: c.Query("after"), Before: c.Query("before"), Attempt: c.Query("attempt"), NodeID: c.Param("nodeId"), Query: c.Query("q"), GroupBy: c.Query("by"), Body: body, Identity: user, Person: person}
+				req.SquadID, req.SquadMemberID = c.Param("squadId"), c.Param("squadMemberId")
 				if c.Param("pluginNamespace") != "" {
 					req.AgentPluginID = c.Param("pluginNamespace") + "/" + c.Param("pluginIdentifier")
 				}
@@ -634,6 +647,9 @@ func bearerToken(header string) (string, bool) {
 
 func validField(name string, value any) bool {
 	switch name {
+	case "maintainer", "clearLeader":
+		_, ok := value.(bool)
+		return ok
 	case "version", "revision", "selectionVersion", "epoch", "admissionEpoch", "protocolVersion", "retrySeconds", "position":
 		n, ok := value.(json.Number)
 		if !ok {
@@ -641,7 +657,7 @@ func validField(name string, value any) bool {
 		}
 		_, e := n.Int64()
 		return e == nil
-	case "ids", "requestedCapabilities":
+	case "ids", "requestedCapabilities", "targetSquadIds":
 		arr, ok := value.([]any)
 		if !ok {
 			return false

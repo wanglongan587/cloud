@@ -26,6 +26,7 @@
 - [内部凭据与服务信任](identity/authentication.md)：双 JWT、Controller 的 mTLS 身份、从凭据到用户
 - [Gateway](identity/gateway.md)：外部登录、浏览器会话、代理、登录 provider
 - [用户、租户与成员](identity/tenancy.md)：租户与 Space、两种加入方式、成员管理
+- [小队与定向加入](identity/squads.md)：编组、维护权、冻结目标、失权与停写升级边界
 
 **运行时**
 

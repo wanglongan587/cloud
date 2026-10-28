@@ -60,7 +60,7 @@ users ──< user_identities          一个用户可以有多条外部身份�
 - `POST /api/v1/join/links/preview` 只读检查链接，Gateway 同源校验和限流后可不带用户会话；Cloud 仍验证 gateway 服务身份。匿名仅返回类型和状态，已登录才返回自己的加入/待审批状态与工作区确认信息；预检不创建身份或消费令牌。错误码保留，并通过 `params.reason` 区分 used、expired、revoked 与 unavailable。
 - 已有有效成员兑换普通邀请直接返回自己的资格，不消耗邀请或修改角色；停用者重新加入仍需有效准入。预检结果不能替代提交时的事务校验。
 - 邀请/申请链接的管理备注不绑定接收人；管理员读取创建者、使用者、申请统计与来源信息。成员资格首次建立或恢复时，同事务写入 `membership_join_events`；`GET /tenants/:tid/members/:uid/join-history` 只向管理员开放。无法证明的历史来源保留未知，不根据旧兑换记录回填。
-- 已是成员的人再提交申请返回 `409 already_member`；同一人的待处理申请只保留一条。
+- 已是成员且不缺目标编组时提交申请返回 `409 already_member`；同一人的待处理申请只保留一条，不同目标冲突。定向加入与失权规则见[小队与定向加入](squads.md)。
 - 兑换和申请发生在成为成员之前，幂等记录按用户保存（`join_idempotency_records`）。用户可以通过
   `GET /api/v1/me/join-requests` 查看自己的申请。
 - 没有公开的空间目录，不能搜索或浏览别人的空间。
@@ -105,7 +105,7 @@ users ──< user_identities          一个用户可以有多条外部身份�
 
 ## 相关决策
 
-- [成员加入来源与私有链接预检](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20261027-member-entry-provenance-and-link-preview.md)（approved）：本实现提供普通邀请的空操作不消费、只读预检及真实资格变更的原子来源。定向小队与签发者失权策略由后续实现承接，不以当前普通链接预检宣称这些边界已实现。
+- [成员加入来源与私有链接预检](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20261027-member-entry-provenance-and-link-preview.md)：与定向加入共用预检、空操作及来源事务边界，ADR 状态和证据在 specs 维护。
 
 - [每个可见协作空间对应一个租户，以租户成员身份授权](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/20260923-one-space-per-tenant.md)
 - [已登录用户自助创建租户，租户成为协作空间的隐式容器](https://github.com/ora-space/specs/blob/main/decisions/cloud/tenancy/0-self-serve-tenant-provisioning.md)

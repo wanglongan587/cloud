@@ -6,10 +6,11 @@ SQL 通过 `core/store.go` 的 `embed.FS` 编入二进制。`Store.Migrate` 在�
 
 ## 文件索引
 
-当前共 74 个 SQL 文件。
+当前共 76 个 SQL 文件。
 
 | SQL 文件 | schema 变化 |
 |---|---|
+| [0074_squad_targeted_joining.sql](0074_squad_targeted_joining.sql) | 小队、类型化编组、冻结加入目标、永久失效与撤权/归档触发器；须停止所有旧写入者后启用 |
 | [0001_core.sql](0001_core.sql) | 基础领域表 |
 | [0002_aggregate_guards.sql](0002_aggregate_guards.sql) | 聚合归属约束 |
 | [0003_resource_versions.sql](0003_resource_versions.sql) | 资源版本 |
