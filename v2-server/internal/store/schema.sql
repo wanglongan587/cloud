@@ -291,3 +291,14 @@ CREATE TABLE IF NOT EXISTS v2_tasks (
 	CHECK (status IN ('pending', 'running', 'review', 'done', 'cancelled'))
 );
 CREATE INDEX IF NOT EXISTS v2_tasks_tenant ON v2_tasks (tenant_id, updated_at DESC, id);
+CREATE TABLE IF NOT EXISTS v2_market_sources (
+ space_id uuid NOT NULL REFERENCES v2_spaces(id) ON DELETE CASCADE,
+ namespace text NOT NULL,
+ url text NOT NULL, branch text NOT NULL, enabled boolean NOT NULL DEFAULT true,
+ revision bigint NOT NULL DEFAULT 1, synced_at timestamptz, failure text NOT NULL DEFAULT '',
+ retrieval jsonb NOT NULL DEFAULT '{}', credentials bytea,
+ snapshot jsonb NOT NULL DEFAULT '[]', PRIMARY KEY(space_id,namespace)
+);
+
+ALTER TABLE v2_market_sources ADD COLUMN IF NOT EXISTS retrieval jsonb NOT NULL DEFAULT '{}';
+ALTER TABLE v2_market_sources ADD COLUMN IF NOT EXISTS credentials bytea;
