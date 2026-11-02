@@ -1,0 +1,63 @@
+{
+  "tenantId": "9aeccb2c-9b48-4d05-add2-aa487dc794dc",
+  "workflowId": "fd806840-4c89-4cad-bc2b-0df1c89d01c5",
+  "scheduleId": "db968386-0ae9-45c2-a604-2d47bf737cdf",
+  "snapshotV1": "956ac142-116e-48ed-b9c4-13812e6bb1a7",
+  "snapshotV2": "1c75251c-0e34-4f3e-bf0b-c0947a68ea6d",
+  "occurrenceId": "643411fe-994d-4cea-ac60-97a9031cfcf9",
+  "workflowRunId": "83219a92-c7d3-4cb9-a3d1-0ecc9858b63e",
+  "runStatus": "succeeded",
+  "variables": [
+    {
+      "selector": [
+        "draft",
+        "output"
+      ],
+      "valueType": "string",
+      "sourceNodeId": "draft",
+      "value": "V2 fixture complete. Real Agent executed the shell tool."
+    },
+    {
+      "selector": [
+        "out",
+        "output"
+      ],
+      "valueType": "string",
+      "sourceNodeId": "out",
+      "value": "{\"draft\":\"V2 fixture complete. Real Agent executed the shell tool.\"}"
+    },
+    {
+      "selector": [
+        "start",
+        "input"
+      ],
+      "valueType": "string",
+      "sourceNodeId": "start",
+      "value": "857 冻结快照验收 mvyssxf0"
+    },
+    {
+      "selector": [
+        "sys",
+        "timestamp"
+      ],
+      "valueType": "number",
+      "sourceNodeId": "sys",
+      "value": 1793596091966
+    },
+    {
+      "selector": [
+        "sys",
+        "workflow_id"
+      ],
+      "valueType": "string",
+      "sourceNodeId": "sys",
+      "value": "fd806840-4c89-4cad-bc2b-0df1c89d01c5"
+    }
+  ],
+  "failedAttempts": [],
+  "nodeId": "draft",
+  "nodeRunId": "778c89ab-66fd-4e5c-83cf-d4bd2cbf9897",
+  "sessionId": "fd755849-bd1b-4bc7-912a-09254bae7b4d",
+  "runEvents": "event: workflow_run_invalidated\ndata: {\"runId\":\"83219a92-c7d3-4cb9-a3d1-0ecc9858b63e\"}\n\n",
+  "nodeEvents": "id: 1\ndata: {\"sequence\":1,\"occurredAt\":\"2026-11-02T05:08:34.782822411Z\",\"kind\":\"history_snapshot\",\"turnId\":\"2fe1270b-deaf-49e5-9bc7-8722a29aae88\",\"history\":{\"records\":[{\"sequence\":0,\"data\":{\"at\":\"2026-11-02T13:08:34.064055637+08:00\",\"cwd\":\"/root/.ora-v2-857/nodes/9f31e8a316423d0d/w/r/4cc7e889-dfd1-4874-bbd3-dcb4e64f928b\",\"seq\":0,\"type\":\"meta\",\"agentRef\":\"official/ora-space.opencode\",\"sessionId\":\"a-e1b55b9a60568cec-1-67952e08bafff70110767d5b016c31a2\",\"workspaceId\":\"c-e1b55b9a60568cec-3-7a114d97c9e4599ace8838fb276a1a2c\",\"schemaVersion\":2,\"agentSessionId\":\"ses_e65573b87ffej6qYxeuHN67PfL\"}}],\"incomplete\":false}}\n\nid: 2\ndata: {\"sequence\":2,\"occurredAt\":\"2026-11-02T05:08:34.792406766Z\",\"kind\":\"history_snapshot\",\"turnId\":\"2fe1270b-deaf-49e5-9bc7-8722a29aae88\",\"history\":{\"records\":[{\"sequence\":0,\"data\":{\"at\":\"2026-11-02T13:08:34.064055637+08:00\",\"cwd\":\"/root/.ora-v2-857/nodes/9f31e8a316423d0d/w/r/4cc7e889-dfd1-4874-bbd3-dcb4e64f928b\",\"seq\":0,\"type\":\"meta\",\"agentRef\":\"official/ora-space.opencod"
+}
