@@ -1,63 +1,282 @@
 {
-  "tenantId": "9aeccb2c-9b48-4d05-add2-aa487dc794dc",
-  "workflowId": "fd806840-4c89-4cad-bc2b-0df1c89d01c5",
-  "scheduleId": "db968386-0ae9-45c2-a604-2d47bf737cdf",
-  "snapshotV1": "956ac142-116e-48ed-b9c4-13812e6bb1a7",
-  "snapshotV2": "1c75251c-0e34-4f3e-bf0b-c0947a68ea6d",
-  "occurrenceId": "643411fe-994d-4cea-ac60-97a9031cfcf9",
-  "workflowRunId": "83219a92-c7d3-4cb9-a3d1-0ecc9858b63e",
-  "runStatus": "succeeded",
-  "variables": [
-    {
-      "selector": [
-        "draft",
-        "output"
-      ],
-      "valueType": "string",
-      "sourceNodeId": "draft",
-      "value": "V2 fixture complete. Real Agent executed the shell tool."
-    },
-    {
-      "selector": [
-        "out",
-        "output"
-      ],
-      "valueType": "string",
-      "sourceNodeId": "out",
-      "value": "{\"draft\":\"V2 fixture complete. Real Agent executed the shell tool.\"}"
-    },
-    {
-      "selector": [
-        "start",
-        "input"
-      ],
-      "valueType": "string",
-      "sourceNodeId": "start",
-      "value": "857 冻结快照验收 mvyssxf0"
-    },
-    {
-      "selector": [
-        "sys",
-        "timestamp"
-      ],
-      "valueType": "number",
-      "sourceNodeId": "sys",
-      "value": 1793596091966
-    },
-    {
-      "selector": [
-        "sys",
-        "workflow_id"
-      ],
-      "valueType": "string",
-      "sourceNodeId": "sys",
-      "value": "fd806840-4c89-4cad-bc2b-0df1c89d01c5"
+  "issue": 857,
+  "parent": 777,
+  "testedAt": "2026-11-05 Asia/Shanghai",
+  "cloud": {
+    "ref": "upstream/main",
+    "commit": "2c632ca6fb944f783450395ee34752564f59fcfb",
+    "pullRequests": {
+      "276": "26079402566480a4bcc8c725dd72e406887e383e",
+      "281": "51ef68026a12c0dd220ae4bc3a4f8fa708571ca8"
     }
-  ],
-  "failedAttempts": [],
-  "nodeId": "draft",
-  "nodeRunId": "778c89ab-66fd-4e5c-83cf-d4bd2cbf9897",
-  "sessionId": "fd755849-bd1b-4bc7-912a-09254bae7b4d",
-  "runEvents": "event: workflow_run_invalidated\ndata: {\"runId\":\"83219a92-c7d3-4cb9-a3d1-0ecc9858b63e\"}\n\n",
-  "nodeEvents": "id: 1\ndata: {\"sequence\":1,\"occurredAt\":\"2026-11-02T05:08:34.782822411Z\",\"kind\":\"history_snapshot\",\"turnId\":\"2fe1270b-deaf-49e5-9bc7-8722a29aae88\",\"history\":{\"records\":[{\"sequence\":0,\"data\":{\"at\":\"2026-11-02T13:08:34.064055637+08:00\",\"cwd\":\"/root/.ora-v2-857/nodes/9f31e8a316423d0d/w/r/4cc7e889-dfd1-4874-bbd3-dcb4e64f928b\",\"seq\":0,\"type\":\"meta\",\"agentRef\":\"official/ora-space.opencode\",\"sessionId\":\"a-e1b55b9a60568cec-1-67952e08bafff70110767d5b016c31a2\",\"workspaceId\":\"c-e1b55b9a60568cec-3-7a114d97c9e4599ace8838fb276a1a2c\",\"schemaVersion\":2,\"agentSessionId\":\"ses_e65573b87ffej6qYxeuHN67PfL\"}}],\"incomplete\":false}}\n\nid: 2\ndata: {\"sequence\":2,\"occurredAt\":\"2026-11-02T05:08:34.792406766Z\",\"kind\":\"history_snapshot\",\"turnId\":\"2fe1270b-deaf-49e5-9bc7-8722a29aae88\",\"history\":{\"records\":[{\"sequence\":0,\"data\":{\"at\":\"2026-11-02T13:08:34.064055637+08:00\",\"cwd\":\"/root/.ora-v2-857/nodes/9f31e8a316423d0d/w/r/4cc7e889-dfd1-4874-bbd3-dcb4e64f928b\",\"seq\":0,\"type\":\"meta\",\"agentRef\":\"official/ora-space.opencod"
+  },
+  "environment": {
+    "database": "PostgreSQL 17.11, ora_v2_857_accept",
+    "server": "v2-server -test-fixtures",
+    "nodeAssets": "/home/wanglongan/.cache/ora-v2-node",
+    "nodeAssetsManifestSha256": "70368cb346058a46ffee31f4b6b8550647921c4d67cb9e6dd248af94a70e150e",
+    "openCodePackageSha256": "88c00f81997fc7fe892f2d58a686f535678e562c7e000d33eb7ee3b1d0f754b5",
+    "dataDir": "/home/wanglongan/v857a",
+    "browser": "Playwright Chromium 156.0.8078.4"
+  },
+  "results": {
+    "directEntry": {
+      "status": "passed",
+      "evidence": "Official schedule-workflows.spec.ts normal-workflow test passed; task history showed 查看执行详情 and opened the same run.",
+      "runId": "1e17d47e-c79f-4615-ab53-71e7c0fd969c",
+      "taskName": "定时容器验收-mw2bselm",
+      "screenshots": [
+        "schedule-workflow-history.png",
+        "schedule-workflow-run-page.png"
+      ]
+    },
+    "loopIterationProjection": {
+      "status": "passed_with_temporary_locator_adjustment",
+      "officialSpecNote": "The unmodified container test reached a successful run, then failed only because getByText(/V2 fixture complete/) matched the rendered answer and its JSON output. An uncommitted test copy used the exact rendered answer with .first().",
+      "duration": "2.9m",
+      "scopes": [
+        {
+          "roundIndex": 1,
+          "status": "succeeded"
+        },
+        {
+          "roundIndex": 2,
+          "status": "succeeded"
+        }
+      ],
+      "variables": [
+        {
+          "selector": [
+            "iter",
+            "entries"
+          ],
+          "valueType": "array[object]",
+          "sourceNodeId": "iter",
+          "value": [
+            {
+              "item": "第一段",
+              "error": null,
+              "output": "V2 fixture complete. Real Agent executed the shell tool.",
+              "status": "succeeded"
+            },
+            {
+              "item": "第二段",
+              "error": null,
+              "output": "V2 fixture complete. Real Agent executed the shell tool.",
+              "status": "succeeded"
+            }
+          ]
+        },
+        {
+          "selector": [
+            "iter",
+            "failed_count"
+          ],
+          "valueType": "number",
+          "sourceNodeId": "iter",
+          "value": 0
+        },
+        {
+          "selector": [
+            "iter",
+            "index"
+          ],
+          "valueType": "number",
+          "sourceNodeId": "iter",
+          "value": 1
+        },
+        {
+          "selector": [
+            "iter",
+            "item"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "iter",
+          "value": "第二段"
+        },
+        {
+          "selector": [
+            "iter",
+            "output"
+          ],
+          "valueType": "array[string]",
+          "sourceNodeId": "iter",
+          "value": [
+            "V2 fixture complete. Real Agent executed the shell tool.",
+            "V2 fixture complete. Real Agent executed the shell tool."
+          ]
+        },
+        {
+          "selector": [
+            "loop",
+            "output"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "loop"
+        },
+        {
+          "selector": [
+            "loop",
+            "result"
+          ],
+          "valueType": "any",
+          "sourceNodeId": "loop",
+          "value": "V2 fixture complete. Real Agent executed the shell tool."
+        },
+        {
+          "selector": [
+            "out",
+            "output"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "out",
+          "value": "{\"draft\":\"V2 fixture complete. Real Agent executed the shell tool.\",\"paragraphs\":[\"V2 fixture complete. Real Agent executed the shell tool.\",\"V2 fixture complete. Real Agent executed the shell tool.\"]}"
+        },
+        {
+          "selector": [
+            "start",
+            "input"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "start",
+          "value": "给支付模块加一个对账接口"
+        },
+        {
+          "selector": [
+            "start",
+            "items"
+          ],
+          "valueType": "array[string]",
+          "sourceNodeId": "start",
+          "value": [
+            "第一段",
+            "第二段"
+          ]
+        },
+        {
+          "selector": [
+            "sys",
+            "timestamp"
+          ],
+          "valueType": "number",
+          "sourceNodeId": "sys",
+          "value": 1793809380772
+        },
+        {
+          "selector": [
+            "sys",
+            "workflow_id"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "sys",
+          "value": "758d76db-adf6-4c9e-b879-b2f014b1eec4"
+        },
+        {
+          "selector": [
+            "worker",
+            "output"
+          ],
+          "valueType": "string",
+          "sourceNodeId": "worker",
+          "value": "V2 fixture complete. Real Agent executed the shell tool."
+        }
+      ],
+      "failedAttempts": [],
+      "loopWriters": [
+        {
+          "nodeId": "writer",
+          "nodeRunId": "88c89da3-ced2-439d-a267-dec792204726",
+          "sessionId": "8fb9f58f-e0f0-4fff-89d0-e688dfa8b681",
+          "scopeId": "scope:4912c286-19c9-4f37-abd5-1e2c382cc465:1",
+          "iteration": null,
+          "task": "改进：初稿"
+        },
+        {
+          "nodeId": "writer",
+          "nodeRunId": "d0a508e7-5eb8-4c08-9e92-41fceb7359d9",
+          "sessionId": "8fcf22ea-f9f5-4b01-86e7-7a7a6bd1b23c",
+          "scopeId": "scope:4912c286-19c9-4f37-abd5-1e2c382cc465:2",
+          "iteration": null,
+          "task": "改进：V2 fixture complete. Real Agent executed the shell tool."
+        }
+      ],
+      "iterations": [
+        {
+          "nodeId": "worker",
+          "nodeRunId": "62685ed4-7ff0-4d0d-80e4-5c385498003d",
+          "sessionId": "3bf51892-c257-411c-9e56-858eb8aa7799",
+          "scopeId": "root:1e17d47e-c79f-4615-ab53-71e7c0fd969c",
+          "iteration": 0,
+          "task": "处理第 0 段：第一段"
+        },
+        {
+          "nodeId": "worker",
+          "nodeRunId": "8bfff9a8-dd68-45a6-83c6-4981fdc13760",
+          "sessionId": "53017cfb-c0fe-4151-a82b-e6d021ceeeae",
+          "scopeId": "root:1e17d47e-c79f-4615-ab53-71e7c0fd969c",
+          "iteration": 1,
+          "task": "处理第 1 段：第二段"
+        }
+      ],
+      "nodeSessionStreams": {
+        "loop_round_1_writer": {
+          "bytes": 21157,
+          "has_fixture_tool": true,
+          "has_fixture_answer": true,
+          "has_turn_end": true,
+          "has_event_end": true
+        },
+        "loop_round_2_writer": {
+          "bytes": 21426,
+          "has_fixture_tool": true,
+          "has_fixture_answer": true,
+          "has_turn_end": true,
+          "has_event_end": true
+        },
+        "iteration_0_worker": {
+          "bytes": 23566,
+          "has_fixture_tool": true,
+          "has_fixture_answer": true,
+          "has_turn_end": true,
+          "has_event_end": true
+        },
+        "iteration_1_worker": {
+          "bytes": 22495,
+          "has_fixture_tool": true,
+          "has_fixture_answer": true,
+          "has_turn_end": true,
+          "has_event_end": true
+        }
+      },
+      "runOutput": "{\"draft\":\"V2 fixture complete. Real Agent executed the shell tool.\",\"paragraphs\":[\"V2 fixture complete. Real Agent executed the shell tool.\",\"V2 fixture complete. Real Agent executed the shell tool.\"]}",
+      "screenshots": [
+        "schedule-container-start.png",
+        "schedule-container-loop-session.png",
+        "schedule-container-session.png"
+      ]
+    },
+    "deletedRunReleasesOccurrence": {
+      "status": "passed",
+      "scenario": "A completed run occurrence was restored to running/unreleased inside a short transaction, the finished run was deleted through the real HTTP API, then the live scheduler reconciled it.",
+      "deleteRunHttpStatus": 200,
+      "getDeletedRunHttpStatus": 404,
+      "occurrence": {
+        "id": "ad138954-30d1-4484-a462-71ecab605262",
+        "status": "failed",
+        "reason": "workflow_run_deleted",
+        "released": true,
+        "executionRef": "{\"workflowRunId\":\"be3f2f99-9d27-4e2e-9744-9109c02109a6\"}"
+      },
+      "nextManualTrigger": {
+        "httpStatus": 200,
+        "occurrenceId": "2383c4fb-f9f4-4548-aecd-23ef57f895ed",
+        "status": "running",
+        "released": false
+      }
+    }
+  },
+  "limitations": [
+    "Agent model responses use the deterministic fixture; external provider behavior is outside this run.",
+    "The official container spec currently has an ambiguous Playwright text locator on latest main; the product assertions passed with the exact-rendered-text locator in an uncommitted copy."
+  ]
 }
